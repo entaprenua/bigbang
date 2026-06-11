@@ -1,11 +1,9 @@
-import { getApiBaseUrl, getApiPrefix, getApiKey } from "./http"
+import { getApiPrefix, localBaseUrl } from "./http"
 
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const base = getApiBaseUrl()
+  const base = localBaseUrl()
   const prefix = getApiPrefix()
-  const apiKey = getApiKey()
   const headers: Record<string, string> = {}
-  if (apiKey) headers["X-Store-API-Key"] = apiKey
   if (init?.body) headers["Content-Type"] = "application/json"
   return fetch(`${base}${prefix}${path}`, {
     ...init,

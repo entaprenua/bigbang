@@ -1,6 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server"
 
-const PROXY_BASE = process.env.VITE_PROXY_API_BASE_URL || "https://entaprenua.com"
+const PROXY_BASE = process.env.PROXY_API_BASE_URL || "https://entaprenua.com"
 const API_PREFIX = process.env.VITE_API_PREFIX || "/api/v1"
 const STORE_API_KEY = process.env.STORE_API_KEY || ""
 
@@ -36,7 +36,8 @@ async function proxy(event: APIEvent) {
 
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {
-    if (key.toLowerCase() !== "transfer-encoding") {
+    const lower = key.toLowerCase()
+    if (lower !== "transfer-encoding" && lower !== "content-encoding" && lower !== "content-length") {
       responseHeaders.set(key, value)
     }
   })
