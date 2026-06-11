@@ -24,15 +24,15 @@ export function Footer() {
               <Flex class="flex-col gap-3">
                 <A href="/contact" class="text-sm hover:text-white transition-colors">Contact Us</A>
                 <A href="/about" class="text-sm hover:text-white transition-colors">About Us</A>
-                <A href="/faq" class="text-sm hover:text-white transition-colors">FAQ</A>
               </Flex>
             </div>
             <div>
               <h3 class="text-white font-serif text-lg mb-6">Legal</h3>
-              <Flex class="flex-col gap-3">
+              {/*<Flex class="flex-col gap-3">
                 <A href="/privacy" class="text-sm hover:text-white transition-colors">Privacy Policy</A>
                 <A href="/terms" class="text-sm hover:text-white transition-colors">Terms of Service</A>
               </Flex>
+             */}
             </div>
             <div>
               <h3 class="text-white font-serif text-lg mb-6">Connect</h3>
