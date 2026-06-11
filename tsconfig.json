@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "allowJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "types": [
+      "vinxi/types/client"
+    ],
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "~": [
+        "./src/index.tsx"
+      ],
+      "~/*": [
+        "./src/*"
+      ],
+      "@kobalte/core/src/*": [
+        "./node_modules/@kobalte/core/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    ".vinxi/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".output"
+  ]
+}
