@@ -1,7 +1,12 @@
 
-## Environment Variables
+## Getting Started
 
-Copy `.env` to `.env.local` and fill in the values:
+```bash
+npm install
+npm run dev
+```
+
+Create a `.env` file at the base of the app with these variables:
 
 ```env
 # Store API authentication (public template — values exposed intentionally for demo/dev)
