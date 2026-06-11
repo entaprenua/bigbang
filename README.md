@@ -4,10 +4,10 @@
 Copy `.env` to `.env.local` and fill in the values:
 
 ```env
-# Store API authentication
-STORE_API_KEY=
-VITE_PROXY_API_BASE_URL=
-VITE_API_PREFIX=
+# Store API authentication (public template — values exposed intentionally for demo/dev)
+STORE_API_KEY=sk_live_8cmcxvqsbtt5
+PROXY_API_BASE_URL=https://entaprenua.com
+VITE_API_PREFIX=/api/v1
 
 # Email (Resend)
 RESEND_API_KEY=
