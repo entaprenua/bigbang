@@ -21,7 +21,7 @@ export default function AboutPage() {
           <h1 class="text-4xl font-serif font-light mb-12 text-center">About Us</h1>
 
           <section class="mb-12">
-            <Callout variant="warning">
+            <Callout variant="default">
               <CalloutTitle>Our Story</CalloutTitle>
               <CalloutContent>
                 <AboutEntry name="story" defaultValue="Our story is being written...">
@@ -51,7 +51,7 @@ export default function AboutPage() {
           </div>
 
           <section class="mb-12">
-            <Callout variant="warning">
+            <Callout variant="success">
               <CalloutTitle>Why Choose Us</CalloutTitle>
               <CalloutContent>
                 <AboutEntry name="whyUs" defaultValue="What sets us apart...">
