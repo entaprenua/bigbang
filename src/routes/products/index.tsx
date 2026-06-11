@@ -7,10 +7,11 @@ import { CollectionContent, CollectionView } from "~/components/ui/collection"
 import ProductCard from "~/components/product-card"
 import { Suspense } from "solid-js"
 import { StoreName } from "~/components/store"
+import { ProductGridSkeleton } from "~/components/loading/product-grid-skeleton"
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={"Products loading...."}>
+    <Suspense fallback={<ProductGridSkeleton />}>
       <div class="bg-stone-50 min-h-screen">
         <div class="bg-white border-b">
           <div class="container mx-auto px-4 py-6">

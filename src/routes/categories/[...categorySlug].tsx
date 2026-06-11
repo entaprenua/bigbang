@@ -5,7 +5,9 @@ import { Grid } from "~/components/ui/grid"
 import { Text } from "~/components/ui/text"
 import { CollectionContent, CollectionView } from "~/components/ui/collection"
 import ProductCard from "~/components/product-card"
+import { Suspense } from "solid-js"
 import { StoreName } from "~/components/store"
+import { CategoryDetailSkeleton } from "~/components/loading/category-detail-skeleton"
 
 function CategoryCard() {
   return (
@@ -22,6 +24,7 @@ function CategoryCard() {
 
 export default function CategoryPage() {
   return (
+    <Suspense fallback={<CategoryDetailSkeleton />}>
     <Category>
       <div class="container mx-auto px-4 py-8">
         <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-6">
@@ -62,5 +65,6 @@ export default function CategoryPage() {
         </ProductList>
       </div>
     </Category>
+    </Suspense>
   )
 }
