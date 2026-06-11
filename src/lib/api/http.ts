@@ -4,7 +4,7 @@ export function getApiPrefix(): string {
 
 export function getApiBaseUrl(): string {
   if (typeof window === "undefined") {
-    return import.meta.env.VITE_PROXY_API_BASE_URL || "http://localhost:8080"
+    return import.meta.env.VITE_PROXY_API_BASE_URL || "https://entaprenua.com"
   }
   return ""
 }

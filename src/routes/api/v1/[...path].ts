@@ -1,6 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server"
 
-const PROXY_BASE = process.env.VITE_PROXY_API_BASE_URL || "http://localhost:8080"
+const PROXY_BASE = process.env.VITE_PROXY_API_BASE_URL || "https://entaprenua.com"
 const API_PREFIX = process.env.VITE_API_PREFIX || "/api/v1"
 const STORE_API_KEY = process.env.STORE_API_KEY || ""
 
