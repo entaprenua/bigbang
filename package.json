@@ -35,6 +35,7 @@
     "@kobalte/core": "^0.13.10",
     "@kobalte/utils": "^0.9.1",
     "@minht11/solid-virtual-container": "^0.2.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@solid-primitives/filesystem": "^1.3.0",
     "@solid-primitives/keyed": "^1.4.0",
     "@solid-primitives/map": "^0.4.13",
