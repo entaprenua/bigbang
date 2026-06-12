@@ -51,9 +51,9 @@ function buildSvg(title: string, description: string): string {
     ${titleLines.map((l, i) => `<tspan x="100" dy="${i === 0 ? 0 : lineHeight}">${l}</tspan>`).join("")}
   </text>
   ${escapedDesc
-    ? `<text x="100" y="${titleY + (titleLines.length > 1 ? titleLines.length * lineHeight : 90)}" font-family="sans-serif" font-size="28" font-weight="400" fill="#94a3b8">${escapedDesc.length > 80 ? escapedDesc.slice(0, 77) + "..." : escapedDesc}<\/text>`
+    ? `<text x="100" y="${titleY + (titleLines.length > 1 ? titleLines.length * lineHeight : 90)}" font-family="sans-serif" font-size="28" font-weight="400" fill="#94a3b8">${escapedDesc.length > 80 ? escapedDesc.slice(0, 77) + "..." : escapedDesc}</text>`
     : ""}
-  <text x="${WIDTH - 100}" y="${HEIGHT - 40}" font-family="sans-serif" font-size="14" font-weight="500" fill="#475569" text-anchor="end">entaprenua<\/text>
+  <text x="${WIDTH - 100}" y="${HEIGHT - 40}" font-family="sans-serif" font-size="14" font-weight="500" fill="#475569" text-anchor="end">entaprenua</text>
 </svg>`
 }
 

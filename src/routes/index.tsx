@@ -12,7 +12,7 @@ import ProductCard from "~/components/product-card"
 function HeroSection() {
   return (
     <HeroRoot class="w-full">
-      <Carousel autoplay>
+      <Carousel autoplay opts={{ loop: true }} class="group">
         <CarouselContent>
           <HeroItems>
             <CollectionView>

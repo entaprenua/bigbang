@@ -13,6 +13,7 @@ import {
   splitProps,
   useContext,
 } from "solid-js"
+import type { EmblaOptionsType } from "embla-carousel"
 import type { CreateEmblaCarouselType } from "embla-carousel-solid"
 import createEmblaCarousel from "embla-carousel-solid"
 import Autoplay from "embla-carousel-autoplay"
@@ -22,10 +23,9 @@ import { cn } from "~/lib/utils"
 export type CarouselApi = CreateEmblaCarouselType[1]
 
 type UseCarouselParameters = Parameters<typeof createEmblaCarousel>
-type CarouselOptions = NonNullable<UseCarouselParameters[0]>
 type CarouselPlugin = NonNullable<UseCarouselParameters[1]>
 
-export type CarouselOptionsType = NonNullable<Parameters<CarouselOptions>>
+export type CarouselOptionsType = EmblaOptionsType
 
 export type CarouselAutoplayOptions = NonNullable<Parameters<typeof Autoplay>[0]>
 

@@ -27,7 +27,7 @@ export const CarouselPrevious: Component<CarouselPreviousProps> = (props) => {
         variant="outline"
         size="icon"
         class={cn(
-          "absolute z-10 size-8 touch-manipulation rounded-full",
+          "absolute z-10 size-8 touch-manipulation rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           carousel.orientation === "horizontal"
             ? "-left-12 top-1/2 -translate-y-1/2"

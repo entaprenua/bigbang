@@ -4,6 +4,7 @@ import { Flex } from "~/components/ui/flex"
 import { SettingsProvider } from "~/components/ui/settings"
 import { SocialEntry, SocialEntryLink } from "~/components/ui/social"
 import { StoreName } from "~/components/store"
+import { StoreDescription } from "~/components/ui/store"
 
 export function Footer() {
   return (
@@ -16,7 +17,7 @@ export function Footer() {
                 <StoreName />
               </h3>
               <p class="text-sm leading-relaxed">
-                Your destination for curated products.
+                <StoreDescription />
               </p>
             </div>
             <div>

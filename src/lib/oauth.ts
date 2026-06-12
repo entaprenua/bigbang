@@ -21,18 +21,6 @@ export interface ExchangeOAuthResult {
   error?: string
 }
 
-export interface ExchangeOAuthResult {
-  success: boolean;
-  customer?: {
-    id: string;
-    email: string;
-    name?: string | null;
-    phone?: string | null;
-    avatarUrl?: string | null;
-  } | null;
-  error?: string;
-}
-
 export async function startOAuth(
   provider: OAuthProvider,
   origin: string,

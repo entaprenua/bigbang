@@ -1,4 +1,4 @@
-import { gqlClient } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/client"
 
 export type SettingsField = "contact" | "delivery" | "social"
   | "about" | "email" | "currencies"
@@ -103,7 +103,7 @@ export const settingsApi = {
   get: async (fields: SettingsField[]): Promise<Partial<ParsedStoreSettings>> => {
     const selections = fields.map((f) => FIELD_QUERIES[f]).join(" ")
     const query = `query Settings { storeSettings { ${selections} } }`
-    const data = await gqlClient.request<{ storeSettings: Record<string, unknown> }>(query)
+    const data = await executeGQL<{ storeSettings: Record<string, unknown> }>(query)
     const storeSettings: Record<string, unknown> = { ...data.storeSettings }
     for (const field of fields) {
       if (JSON_FIELDS.has(field)) {

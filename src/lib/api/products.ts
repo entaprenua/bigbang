@@ -1,4 +1,4 @@
-import { gqlClient } from "../graphql/client"
+import { executeGQL } from "~/lib/graphql/client"
 import { PRODUCT_BY_SLUG, PRODUCT_BY_ID, PRODUCTS_QUERY, PRODUCT_FILTER_OPTIONS_QUERY, PRODUCT_SUGGESTIONS_QUERY } from "../graphql/queries"
 import type { Product, ProductConnection } from "../types"
 
@@ -28,11 +28,11 @@ export interface ProductFilters {
 
 export const productsApi = {
   getFilterOptions: async (fields: string[]): Promise<FilterOptionsData> => {
-    return gqlClient.request<FilterOptionsData>(PRODUCT_FILTER_OPTIONS_QUERY, { fields })
+    return executeGQL<FilterOptionsData>(PRODUCT_FILTER_OPTIONS_QUERY, { fields })
   },
 
   suggestions: async (query: string, limit: number = 10): Promise<string[]> => {
-    const data = await gqlClient.request<{ productSuggestions: string[] }>(
+    const data = await executeGQL<{ productSuggestions: string[] }>(
       PRODUCT_SUGGESTIONS_QUERY,
       { query, limit }
     )
@@ -40,7 +40,7 @@ export const productsApi = {
   },
 
   getBySlug: async (slug: string): Promise<Product | null> => {
-    const data = await gqlClient.request<{ product: Product | null }>(
+    const data = await executeGQL<{ product: Product | null }>(
       PRODUCT_BY_SLUG,
       { slug }
     )
@@ -48,7 +48,7 @@ export const productsApi = {
   },
 
   getById: async (id: string): Promise<Product | null> => {
-    const data = await gqlClient.request<{ product: Product | null }>(
+    const data = await executeGQL<{ product: Product | null }>(
       PRODUCT_BY_ID,
       { id }
     )
@@ -61,7 +61,7 @@ export const productsApi = {
     size: number = 20,
     filters?: ProductFilters
   ): Promise<ProductConnection> => {
-    const data = await gqlClient.request<{ products: ProductConnection }>(
+    const data = await executeGQL<{ products: ProductConnection }>(
       PRODUCTS_QUERY,
       {
         after, before, size,

@@ -1,4 +1,4 @@
-import { gqlClient } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/client"
 import {
   REVIEWS_BY_PRODUCT_QUERY, REVIEW_STATS_QUERY,
   CREATE_REVIEW_MUTATION, UPDATE_REVIEW_MUTATION, DELETE_REVIEW_MUTATION,
@@ -20,29 +20,29 @@ export const reviewsApi = {
     size = 20,
     sortBy?: string,
   ): Promise<ReviewConnection> => {
-    const data = await gqlClient.request<ProductWithReviews>(REVIEWS_BY_PRODUCT_QUERY, {
+    const data = await executeGQL<ProductWithReviews>(REVIEWS_BY_PRODUCT_QUERY, {
       productId, page, size, sortBy,
     })
     return data.product?.reviews ?? { edges: [], pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: null, startCursor: null }, totalCount: 0 }
   },
 
   getStats: async (productId: string): Promise<ReviewStats | null> => {
-    const data = await gqlClient.request<ProductWithReviewStats>(REVIEW_STATS_QUERY, { productId })
+    const data = await executeGQL<ProductWithReviewStats>(REVIEW_STATS_QUERY, { productId })
     return data.product?.reviewStats ?? null
   },
 
   create: async (input: CreateReviewInput): Promise<Review> => {
-    const data = await gqlClient.request<{ createReview: Review }>(CREATE_REVIEW_MUTATION, { input })
+    const data = await executeGQL<{ createReview: Review }>(CREATE_REVIEW_MUTATION, { input })
     return data.createReview
   },
 
   update: async (input: UpdateReviewInput): Promise<Review> => {
-    const data = await gqlClient.request<{ updateReview: Review }>(UPDATE_REVIEW_MUTATION, { input })
+    const data = await executeGQL<{ updateReview: Review }>(UPDATE_REVIEW_MUTATION, { input })
     return data.updateReview
   },
 
   delete: async (productId: string, reviewId: string): Promise<boolean> => {
-    const data = await gqlClient.request<{ deleteReview: boolean }>(DELETE_REVIEW_MUTATION, { productId, reviewId })
+    const data = await executeGQL<{ deleteReview: boolean }>(DELETE_REVIEW_MUTATION, { productId, reviewId })
     return data.deleteReview
   },
 }

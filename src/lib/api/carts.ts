@@ -1,4 +1,4 @@
-import { gqlClient } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/client"
 import {
   CART_QUERY,
   ADD_TO_CART_MUTATION,
@@ -25,19 +25,19 @@ interface CartQueryResult {
 }
 
 async function refetchCart(): Promise<Cart> {
-  const data = await gqlClient.request<CartQueryResult>(CART_QUERY)
+  const data = await executeGQL<CartQueryResult>(CART_QUERY)
   if (!data.cart) throw new Error("Cart not found")
   return data.cart
 }
 
 export const cartsApi = {
   get: async (): Promise<Cart | null> => {
-    const data = await gqlClient.request<CartQueryResult>(CART_QUERY)
+    const data = await executeGQL<CartQueryResult>(CART_QUERY)
     return data.cart ?? null
   },
 
   create: async (): Promise<Cart> => {
-    const data = await gqlClient.request<CartQueryResult>(CART_QUERY)
+    const data = await executeGQL<CartQueryResult>(CART_QUERY)
     return data.cart ?? (await refetchCart())
   },
 
@@ -46,11 +46,11 @@ export const cartsApi = {
   },
 
   delete: async (): Promise<void> => {
-    await gqlClient.request(CLEAR_CART_MUTATION)
+    await executeGQL(CLEAR_CART_MUTATION)
   },
 
   addItem: async (input: AddToCartInput): Promise<CartItem> => {
-    await gqlClient.request(ADD_TO_CART_MUTATION, {
+    await executeGQL(ADD_TO_CART_MUTATION, {
       input: { variantId: input.productId, quantity: input.quantity ?? 1 },
     })
     const cart = await refetchCart()
@@ -66,7 +66,7 @@ export const cartsApi = {
     const vars: Record<string, unknown> = { variantId }
     if (input.quantity !== undefined) vars.quantity = input.quantity
     if (input.selected !== undefined) vars.selected = input.selected
-    await gqlClient.request(UPDATE_CART_ITEM_MUTATION, vars)
+    await executeGQL(UPDATE_CART_ITEM_MUTATION, vars)
     const cart = await refetchCart()
     const item = cart.items.find(i => i.productId === variantId)
     if (!item) throw new Error("Item not found after update")
@@ -74,11 +74,11 @@ export const cartsApi = {
   },
 
   removeItem: async (variantId: string): Promise<void> => {
-    await gqlClient.request(REMOVE_CART_ITEM_MUTATION, { variantId })
+    await executeGQL(REMOVE_CART_ITEM_MUTATION, { variantId })
   },
 
   clearSelectedItems: async (): Promise<{ deleted: number }> => {
-    await gqlClient.request(CLEAR_SELECTED_CART_ITEMS_MUTATION)
+    await executeGQL(CLEAR_SELECTED_CART_ITEMS_MUTATION)
     return { deleted: 0 }
   },
 }

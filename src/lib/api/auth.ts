@@ -12,8 +12,7 @@ export interface AuthMeResponse {
 }
 
 export async function me(): Promise<AuthMeResponse["data"]> {
-  const res = await apiFetch("/auth/me")
-  const json = await res.json() as AuthMeResponse
+  const json = await apiFetch("/auth/me") as AuthMeResponse
   return json.data ?? null
 }
 
@@ -23,11 +22,10 @@ export interface RequestOtpResponse {
 }
 
 export async function requestOtp(email: string): Promise<RequestOtpResponse["data"]> {
-  const res = await apiFetch("/auth/request-otp", {
+  const json = await apiFetch("/auth/request-otp", {
     method: "POST",
     body: JSON.stringify({ email }),
-  })
-  const json = await res.json() as RequestOtpResponse
+  }) as RequestOtpResponse
   return json.data
 }
 
@@ -41,11 +39,10 @@ export interface VerifyOtpResponse {
 }
 
 export async function verifyOtp(email: string, otp: string): Promise<VerifyOtpResponse["data"]> {
-  const res = await apiFetch("/auth/verify-otp", {
+  const json = await apiFetch("/auth/verify-otp", {
     method: "POST",
     body: JSON.stringify({ email, otp }),
-  })
-  const json = await res.json() as VerifyOtpResponse
+  }) as VerifyOtpResponse
   return json.data
 }
 
@@ -68,11 +65,10 @@ export interface RegisterCustomerResponse {
 }
 
 export async function registerCustomer(input: RegisterCustomerInput): Promise<RegisterCustomerResponse["data"]> {
-  const res = await apiFetch("/auth/register", {
+  const json = await apiFetch("/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
-  })
-  const json = await res.json() as RegisterCustomerResponse
+  }) as RegisterCustomerResponse
   return json.data
 }
 

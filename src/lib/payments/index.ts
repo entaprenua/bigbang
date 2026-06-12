@@ -1,6 +1,6 @@
 "use server";
 
-import { gqlClient } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/client"
 import { CHECKOUT_MUTATION } from "~/lib/graphql/queries"
 import { cartsApi } from "~/lib/api/carts"
 import type { AddressInput, CheckoutInput, CheckoutItemInput, CheckoutResult } from "~/lib/types"
@@ -63,7 +63,7 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
 
   if (data.directBuy) {
     const { productId, variantId, quantity } = data.directBuy
-    const res = await gqlClient.request<{ product: { id: string; name: string; variants: { id: string; price: string; sku: string }[] } }>(
+    const res = await executeGQL<{ product: { id: string; name: string; variants: { id: string; price: string; sku: string }[] } }>(
       `query Product($id: String!) { product(id: $id) { id name variants { id price sku } } }`,
       { id: productId },
     )
@@ -127,7 +127,7 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
     notes: data.notes || undefined,
   }
 
-  const res = await gqlClient.request<{ checkout: CheckoutResult }>(CHECKOUT_MUTATION, { input })
+  const res = await executeGQL<{ checkout: CheckoutResult }>(CHECKOUT_MUTATION, { input })
   const result = res.checkout
 
   if (result.success && data.provider === "mpesa") {

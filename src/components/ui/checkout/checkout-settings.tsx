@@ -1,6 +1,6 @@
 import { createContext, useContext, createResource, type JSX } from 'solid-js'
 import { settingsApi } from '~/lib/api/settings'
-import { gqlClient } from '~/lib/graphql/client'
+import { executeGQL } from '~/lib/graphql/client'
 import type { DeliveryZone, ShippingClass } from '~/lib/types'
 
 const DELIVERY_ZONES_QUERY = `
@@ -44,7 +44,7 @@ function CheckoutSettingsProvider(props: { children?: JSX.Element }) {
   const [data] = createResource(async () => {
     const [settings, zonesData] = await Promise.all([
       settingsApi.get(['delivery']),
-      gqlClient.request<{ deliveryZones: DeliveryZone[] }>(DELIVERY_ZONES_QUERY),
+      executeGQL<{ deliveryZones: DeliveryZone[] }>(DELIVERY_ZONES_QUERY),
     ])
 
     return {
