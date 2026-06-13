@@ -96,6 +96,8 @@ export const WishlistProvider = (props: WishlistProviderProps) => {
     }
   }
 
+  // TODO/FIXME: removeItem deletes the entire wishlist via removeFromWishlist(wishlistId).
+  // Should rewrite wishlist via addToWishlist with all items except the one being removed instead.
   const removeItem = async (productId: string) => {
     const currentWishlist = wishlist()
     if (!currentWishlist) return

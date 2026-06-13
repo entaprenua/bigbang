@@ -292,6 +292,18 @@ export const CHECKOUT_MUTATION = `
       total
       currency
       paymentMethod
+      paymentId
+    }
+  }
+`
+
+export const CONFIRM_PAYMENT_MUTATION = `
+  mutation ConfirmPayment($input: PaymentConfirmationInput!) {
+    confirmPayment(input: $input) {
+      success
+      paymentId
+      status
+      orderStatus
     }
   }
 `

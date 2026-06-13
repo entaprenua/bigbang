@@ -77,7 +77,7 @@ export async function initiateMpesaPayment(payload: PaymentPayload): Promise<Pay
       return { success: false, provider: "mpesa", status: "failed", message: "Invalid phone number" }
     }
 
-    const callbackUrl = `${process.env.MPESA_CALLBACK_URL || ""}/api/mpesa/callback`
+    const callbackUrl = `${process.env.MPESA_CALLBACK_URL || ""}/api/mpesa/callback/${payload.paymentId}`
 
     const body = {
       BusinessShortCode: shortcode,

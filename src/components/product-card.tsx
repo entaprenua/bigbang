@@ -17,7 +17,7 @@ export default function ProductCard() {
             <span class="text-[11px] font-medium bg-background/90 text-foreground px-2 py-1 rounded-md backdrop-blur-sm shadow-sm">Out of Stock</span>
           </ProductOutOfStockBadge>
         </div>
-        <div class="absolute bottom-0 left-0 right-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
+        <div class="absolute bottom-0 left-0 right-0 md:translate-y-full transition-transform duration-300 md:group-hover:translate-y-0">
           <ProductAddToCartTrigger class="w-full py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors" />
         </div>
       </div>

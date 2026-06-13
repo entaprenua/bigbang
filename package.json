@@ -68,7 +68,6 @@
     "embla-carousel-solid": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.0.2",
     "graphql": "^16.14.0",
-    "graphql-request": "^7.4.0",
     "i18n-iso-countries": "^7.14.0",
     "json2mq": "^0.2.0",
     "jsonwebtoken": "^9.0.3",

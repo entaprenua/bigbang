@@ -195,10 +195,10 @@ const ProductAddToCartTrigger = (props: ProductActionProps) => {
       const v = variantCtx?.selectedVariant()
       const fallback = product.data.variants?.[0]
       const price = v?.price ? parseFloat(v.price) : (fallback?.price ? parseFloat(fallback.price) : 0)
-      const productId = product.data.id || product.data.productId
-      if (productId) {
+      const variantId = v?.id ?? fallback?.id ?? product.data.id
+      if (variantId) {
         cart.addItem({
-          productId,
+          productId: variantId,
           name: product.data.name,
           price,
           image: v?.image ?? fallback?.image ?? undefined,
@@ -225,6 +225,7 @@ const ProductAddToCartTrigger = (props: ProductActionProps) => {
 const ProductRemoveFromCartTrigger = (props: ProductActionProps) => {
   const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
   const product = useProduct()
+  const variantCtx = useProductVariantOptional()
 
   let cart: ReturnType<typeof useCart> | undefined
   try {
@@ -235,8 +236,13 @@ const ProductRemoveFromCartTrigger = (props: ProductActionProps) => {
 
   const handleClick = (e: MouseEvent) => {
     local.onClick?.(e)
-    if (product?.data?.id && cart) {
-      cart.removeItem(product.data.id)
+    if (product?.data && cart) {
+      const v = variantCtx?.selectedVariant()
+      const fallback = product.data.variants?.[0]
+      const variantId = v?.id ?? fallback?.id ?? product.data.id
+      if (variantId) {
+        cart.removeItem(variantId)
+      }
     }
   }
 

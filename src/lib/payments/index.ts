@@ -1,7 +1,7 @@
 "use server";
 
 import { executeGQL } from "~/lib/graphql/client"
-import { CHECKOUT_MUTATION } from "~/lib/graphql/queries"
+import { CHECKOUT_MUTATION, CLEAR_SELECTED_CART_ITEMS_MUTATION } from "~/lib/graphql/queries"
 import { cartsApi } from "~/lib/api/carts"
 import type { AddressInput, CheckoutInput, CheckoutItemInput, CheckoutResult } from "~/lib/types"
 
@@ -10,6 +10,7 @@ export type PaymentProvider = "mpesa"
 export interface PaymentPayload {
   orderId: string
   orderNumber: string
+  paymentId: string
   amount: string
   currency: string
   phone: string
@@ -130,10 +131,15 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
   const res = await executeGQL<{ checkout: CheckoutResult }>(CHECKOUT_MUTATION, { input })
   const result = res.checkout
 
+  if (result.success) {
+    executeGQL(CLEAR_SELECTED_CART_ITEMS_MUTATION).catch(() => {})
+  }
+
   if (result.success && data.provider === "mpesa") {
     processPayment("mpesa", {
       orderId: result.orderId!,
       orderNumber: result.orderNumber!,
+      paymentId: result.paymentId!,
       amount: result.total!,
       currency: result.currency!,
       phone: data.paymentPhone,

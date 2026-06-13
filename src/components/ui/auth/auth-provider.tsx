@@ -165,8 +165,8 @@ export const AuthProvider: ParentComponent = (props) => {
   onMount(async () => {
     try {
       await apiFetch("/sessions")
-    } catch {
-      // Non-critical — session/cart_token cookie is optional
+    } catch (e) {
+      console.warn("Session creation failed (cart may not persist):", e)
     }
     setIsLoading(false)
   })
