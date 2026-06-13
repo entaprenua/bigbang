@@ -86,7 +86,8 @@ const CategorySubcategories = (props: CategorySubcategoriesProps) => {
   }
 
   const childrenMemo = createMemo(() => {
-    return parentCategory?.data()?.children ?? null
+    const conn = parentCategory?.data()?.children as any
+    return conn?.edges?.map((e: any) => e.node) ?? null
   })
 
   const hasChildren = () => {

@@ -8,7 +8,7 @@ export type CategoryProps = {
   level?: number
   parentId?: string | null
   path?: string | null
-  children?: CategoryProps[] | null
+  children?: any
 }
 
 export type CategoryContextValue = {

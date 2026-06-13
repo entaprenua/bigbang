@@ -161,7 +161,7 @@ const CategoryRootContent = (props: { href?: string; class?: string; children?: 
         <div class="text-destructive text-sm">Failed to load category</div>
       }
     >
-        <CategoryProvider data={categoryData() as CategoryProps}>
+        <CategoryProvider data={categoryData() as unknown as CategoryProps}>
         <CategoryWrapper href={local.href} class={local.class}>
           {local.children}
         </CategoryWrapper>

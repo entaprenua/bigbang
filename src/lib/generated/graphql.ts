@@ -9,11 +9,6 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type AddMemberInput = {
-  email: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
 export type AddressInput = {
   city?: InputMaybe<Scalars['String']['input']>;
   country?: InputMaybe<Scalars['String']['input']>;
@@ -57,22 +52,55 @@ export type CartItemInput = {
 
 export type Category = {
   __typename?: 'Category';
-  children: Array<Category>;
+  children: CategoryConnection;
   id: Scalars['String']['output'];
   image?: Maybe<Scalars['String']['output']>;
   level: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   parentId?: Maybe<Scalars['String']['output']>;
   path?: Maybe<Scalars['String']['output']>;
-  products?: Maybe<ProductConnection>;
+  products: ProductConnection;
   slug?: Maybe<Scalars['String']['output']>;
   visibility?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type CategoryChildrenArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  size?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type CategoryProductsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  size?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type CategoryAddChildrenInput = {
+  categoryId: Scalars['String']['input'];
+  childIds: Array<Scalars['String']['input']>;
+};
+
+export type CategoryAddProductsInput = {
+  categoryId: Scalars['String']['input'];
+  productIds: Array<Scalars['String']['input']>;
+};
+
+export type CategoryConnection = {
+  __typename?: 'CategoryConnection';
+  edges: Array<CategoryEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CategoryEdge = {
+  __typename?: 'CategoryEdge';
+  cursor: Scalars['String']['output'];
+  node: Category;
 };
 
 export type CategoryFiltersInput = {
@@ -80,6 +108,16 @@ export type CategoryFiltersInput = {
   parentId?: InputMaybe<Scalars['String']['input']>;
   root?: InputMaybe<Scalars['Boolean']['input']>;
   tree?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type CategoryRemoveChildrenInput = {
+  categoryId: Scalars['String']['input'];
+  childIds: Array<Scalars['String']['input']>;
+};
+
+export type CategoryRemoveProductsInput = {
+  categoryId: Scalars['String']['input'];
+  productIds: Array<Scalars['String']['input']>;
 };
 
 /** Flattened delivery data for the storefront checkout */
@@ -359,11 +397,6 @@ export type DeliveryZoneMethodInput = {
   price: Scalars['Float']['input'];
 };
 
-export type GeneratePresignedInput = {
-  contentType?: InputMaybe<Scalars['String']['input']>;
-  fileName: Scalars['String']['input'];
-};
-
 export type Hero = {
   __typename?: 'Hero';
   aspectRatio: Scalars['String']['output'];
@@ -424,51 +457,15 @@ export type HeroItem = {
   titleColor: Scalars['String']['output'];
 };
 
-export type InviteViaEmailInput = {
-  email: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
-export type Media = {
-  __typename?: 'Media';
-  fileName: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  insertedAt: Scalars['String']['output'];
-  mimeType?: Maybe<Scalars['String']['output']>;
-  objectKey: Scalars['String']['output'];
-  size?: Maybe<Scalars['Int']['output']>;
-  storeId: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
-export type MediaConnection = {
-  __typename?: 'MediaConnection';
-  edges: Array<MediaEdge>;
-  pageInfo: PageInfo;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type MediaEdge = {
-  __typename?: 'MediaEdge';
-  cursor: Scalars['String']['output'];
-  node: Media;
-};
-
-export type MediaStats = {
-  __typename?: 'MediaStats';
-  totalFiles: Scalars['Int']['output'];
-  totalSizeBytes: Scalars['String']['output'];
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
-  addCategoryChildren: Scalars['Boolean']['output'];
-  addCategoryProducts: Scalars['Boolean']['output'];
   addFavorite: Scalars['Boolean']['output'];
-  addMember: Scalars['Boolean']['output'];
   addToCart: Cart;
   addToWishlist: Scalars['Boolean']['output'];
-  cancelInvitation: Scalars['Boolean']['output'];
+  categoryAddChildren: Category;
+  categoryAddProducts: Category;
+  categoryRemoveChildren: Category;
+  categoryRemoveProducts: Category;
   checkout: CheckoutResult;
   clearCart: Scalars['Boolean']['output'];
   clearSelectedCartItems: Scalars['Boolean']['output'];
@@ -486,22 +483,14 @@ export type Mutation = {
   deleteDeliveryZone: Scalars['Boolean']['output'];
   deleteHero: Scalars['Boolean']['output'];
   deleteHeroItem: Scalars['Boolean']['output'];
-  deleteMedia: Scalars['Boolean']['output'];
   deleteNotificationTemplate: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   deleteProduct: Scalars['Boolean']['output'];
   deleteReview: Scalars['Boolean']['output'];
   deleteShippingClass: Scalars['Boolean']['output'];
-  deleteStore: Scalars['Boolean']['output'];
-  generatePresignedUrl: PresignedMedia;
-  inviteViaEmail: Scalars['Boolean']['output'];
-  registerMedia: Media;
   removeCartItem: Scalars['Boolean']['output'];
-  removeCategoryChildren: Scalars['Boolean']['output'];
-  removeCategoryProducts: Scalars['Boolean']['output'];
   removeFavorite: Scalars['Boolean']['output'];
   removeFromWishlist: Scalars['Boolean']['output'];
-  removeMember: Scalars['Boolean']['output'];
   replaceZoneClassPrices: Scalars['Boolean']['output'];
   saveHero: Hero;
   saveHeroItem: HeroItem;
@@ -513,35 +502,16 @@ export type Mutation = {
   updateDeliveryZone: Scalars['Boolean']['output'];
   updateGenericSettings: Scalars['Boolean']['output'];
   updateHeroItem: HeroItem;
-  updateMemberRole: Scalars['Boolean']['output'];
   updateNotificationTemplate: Scalars['Boolean']['output'];
   updateOrderStatus: Order;
   updateProduct: Product;
   updateReview: Review;
   updateShippingClass: Scalars['Boolean']['output'];
-  updateStore: Store;
-};
-
-
-export type MutationAddCategoryChildrenArgs = {
-  categoryId: Scalars['String']['input'];
-  childIds: Array<Scalars['String']['input']>;
-};
-
-
-export type MutationAddCategoryProductsArgs = {
-  categoryId: Scalars['String']['input'];
-  productIds: Array<Scalars['String']['input']>;
 };
 
 
 export type MutationAddFavoriteArgs = {
   productId: Scalars['String']['input'];
-};
-
-
-export type MutationAddMemberArgs = {
-  input: AddMemberInput;
 };
 
 
@@ -555,8 +525,23 @@ export type MutationAddToWishlistArgs = {
 };
 
 
-export type MutationCancelInvitationArgs = {
-  id: Scalars['String']['input'];
+export type MutationCategoryAddChildrenArgs = {
+  input: CategoryAddChildrenInput;
+};
+
+
+export type MutationCategoryAddProductsArgs = {
+  input: CategoryAddProductsInput;
+};
+
+
+export type MutationCategoryRemoveChildrenArgs = {
+  input: CategoryRemoveChildrenInput;
+};
+
+
+export type MutationCategoryRemoveProductsArgs = {
+  input: CategoryRemoveProductsInput;
 };
 
 
@@ -630,11 +615,6 @@ export type MutationDeleteHeroItemArgs = {
 };
 
 
-export type MutationDeleteMediaArgs = {
-  id: Scalars['String']['input'];
-};
-
-
 export type MutationDeleteNotificationTemplateArgs = {
   channel: Scalars['String']['input'];
   eventType: Scalars['String']['input'];
@@ -662,35 +642,8 @@ export type MutationDeleteShippingClassArgs = {
 };
 
 
-export type MutationGeneratePresignedUrlArgs = {
-  input: GeneratePresignedInput;
-};
-
-
-export type MutationInviteViaEmailArgs = {
-  input: InviteViaEmailInput;
-};
-
-
-export type MutationRegisterMediaArgs = {
-  input: RegisterMediaInput;
-};
-
-
 export type MutationRemoveCartItemArgs = {
   variantId: Scalars['String']['input'];
-};
-
-
-export type MutationRemoveCategoryChildrenArgs = {
-  categoryId: Scalars['String']['input'];
-  childIds: Array<Scalars['String']['input']>;
-};
-
-
-export type MutationRemoveCategoryProductsArgs = {
-  categoryId: Scalars['String']['input'];
-  productIds: Array<Scalars['String']['input']>;
 };
 
 
@@ -701,11 +654,6 @@ export type MutationRemoveFavoriteArgs = {
 
 export type MutationRemoveFromWishlistArgs = {
   wishlistId: Scalars['String']['input'];
-};
-
-
-export type MutationRemoveMemberArgs = {
-  id: Scalars['String']['input'];
 };
 
 
@@ -769,12 +717,6 @@ export type MutationUpdateHeroItemArgs = {
 };
 
 
-export type MutationUpdateMemberRoleArgs = {
-  id: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateNotificationTemplateArgs = {
   input: UpdateNotificationTemplateInput;
 };
@@ -798,11 +740,6 @@ export type MutationUpdateReviewArgs = {
 
 export type MutationUpdateShippingClassArgs = {
   input: UpdateShippingClassInput;
-};
-
-
-export type MutationUpdateStoreArgs = {
-  input: UpdateStoreInput;
 };
 
 export type NotificationTemplate = {
@@ -971,13 +908,6 @@ export type PaymentFiltersInput = {
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type PresignedMedia = {
-  __typename?: 'PresignedMedia';
-  objectKey: Scalars['String']['output'];
-  publicUrl: Scalars['String']['output'];
-  uploadUrl: Scalars['String']['output'];
-};
-
 export type PriceRange = {
   __typename?: 'PriceRange';
   max: Scalars['String']['output'];
@@ -1134,10 +1064,6 @@ export type Query = {
   deliveryZone?: Maybe<DeliveryZone>;
   deliveryZones: Array<DeliveryZone>;
   hero?: Maybe<Hero>;
-  invitations: Array<StoreInvitation>;
-  media: MediaConnection;
-  mediaStats: MediaStats;
-  members: Array<StoreMember>;
   notificationTemplates: Array<NotificationTemplate>;
   order?: Maybe<Order>;
   orderCount: Scalars['Int']['output'];
@@ -1185,14 +1111,6 @@ export type QueryCouponUsagesArgs = {
 
 export type QueryDeliveryZoneArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type QueryMediaArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  page?: InputMaybe<Scalars['Int']['input']>;
-  size?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1286,14 +1204,6 @@ export type RecommendationsInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   sessionId?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type RegisterMediaInput = {
-  fileName: Scalars['String']['input'];
-  mimeType?: InputMaybe<Scalars['String']['input']>;
-  objectKey: Scalars['String']['input'];
-  size?: InputMaybe<Scalars['Int']['input']>;
-  url: Scalars['String']['input'];
 };
 
 export type ReplaceZoneClassPricesInput = {
@@ -1467,26 +1377,6 @@ export type StoreApiKey = {
   prefix: Scalars['String']['output'];
 };
 
-export type StoreInvitation = {
-  __typename?: 'StoreInvitation';
-  createdAt?: Maybe<Scalars['String']['output']>;
-  email: Scalars['String']['output'];
-  expiresAt: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  role: Scalars['String']['output'];
-  status: Scalars['String']['output'];
-};
-
-export type StoreMember = {
-  __typename?: 'StoreMember';
-  acceptedAt?: Maybe<Scalars['String']['output']>;
-  email?: Maybe<Scalars['String']['output']>;
-  id: Scalars['String']['output'];
-  invitedAt?: Maybe<Scalars['String']['output']>;
-  role: Scalars['String']['output'];
-  username?: Maybe<Scalars['String']['output']>;
-};
-
 /** All store settings grouped by type. Each JSON string field maps to a settings schema defined on the backend — clients parse with JSON.parse(). */
 export type StoreSettings = {
   __typename?: 'StoreSettings';
@@ -1500,6 +1390,8 @@ export type StoreSettings = {
   delivery?: Maybe<DeliverySettings>;
   /** Email configuration for storefront customer authentication (JSON) */
   email?: Maybe<Scalars['String']['output']>;
+  /** Environment variables for the template (JSON) */
+  environment?: Maybe<Scalars['String']['output']>;
   /** Social media profiles for your store (JSON) */
   social?: Maybe<Scalars['String']['output']>;
 };
@@ -1590,15 +1482,6 @@ export type UpdateShippingClassInput = {
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   position?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type UpdateStoreInput = {
-  currency?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  domain?: InputMaybe<Scalars['String']['input']>;
-  isInMaintenanceMode?: InputMaybe<Scalars['Boolean']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  visibility?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ValidateCouponInput = {

@@ -38,13 +38,17 @@ export const CATEGORY_FIELDS = `
     parentId
     path
     children {
-      id
-      name
-      slug
-      image
-      level
-      parentId
-      path
+      edges {
+        node {
+          id
+          name
+          slug
+          image
+          level
+          parentId
+          path
+        }
+      }
     }
   }
 `

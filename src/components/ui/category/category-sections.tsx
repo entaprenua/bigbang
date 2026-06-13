@@ -9,7 +9,7 @@ const useCategoryData = (): (() => Category | undefined) => {
   if (collectionItem) return () => collectionItem.item as Category
 
   const categoryCtx = useCategory()
-  return categoryCtx.data as (() => Category | null) as () => Category | undefined
+  return categoryCtx.data as unknown as () => Category | undefined
 }
 
 type CategoryNameProps = {
