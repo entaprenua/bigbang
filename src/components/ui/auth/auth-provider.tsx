@@ -1,6 +1,6 @@
 import { createContext, useContext, createSignal, onMount, type ParentComponent, type Accessor } from 'solid-js'
 import { me as fetchMe, requestOtp as apiRequestOtp, verifyOtp as apiVerifyOtp, logout as apiLogout } from '~/lib/api/auth'
-import { apiFetch } from '~/lib/api/client'
+import { apiFetch } from '~/lib/api/server'
 import { startOAuth as startServerOAuth, exchangeOAuth as exchangeServerOAuth } from '~/lib/oauth'
 import type { OAuthProvider } from '~/lib/oauth'
 
@@ -32,7 +32,7 @@ interface AuthContextType {
   user: Accessor<StoreCustomer | null>
   isAuthenticated: Accessor<boolean>
   isLoading: Accessor<boolean>
-  requestOtp: (email: string) => Promise<OtpResponse>
+  requestOtp: (email: string, otp: string) => Promise<OtpResponse>
   verifyOtp: (email: string, otp: string) => Promise<OtpResponse>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
@@ -49,9 +49,9 @@ export const AuthProvider: ParentComponent = (props) => {
 
   const isAuthenticated = () => !!user()
 
-  const requestOtp = async (email: string): Promise<OtpResponse> => {
+  const requestOtp = async (email: string, otp: string): Promise<OtpResponse> => {
     try {
-      const result = await apiRequestOtp(email)
+      const result = await apiRequestOtp(email, otp)
       return { success: result.success, message: result.message }
     } catch (err) {
       return { success: false, message: err instanceof Error ? err.message : 'Request failed' }

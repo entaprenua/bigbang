@@ -1,11 +1,15 @@
-import { Show, splitProps, type JSX, type ComponentProps } from "solid-js"
+import { Show, splitProps, type JSX, type ComponentProps, createMemo } from "solid-js"
 import { useCart, type CartItemContextData } from "./cart-context"
-import { Button } from "../button"
+import { Button, type ButtonProps } from "../button"
 import { Text } from "../text"
 import { Flex } from "../flex"
 import { Link } from "../link"
 import { cn } from "~/lib/utils"
 import { Collection, useCollectionItem } from "../collection"
+import { MutationProvider, MutationButton } from "../query"
+import { Select } from "../select"
+import { useResolvedProduct } from "../product/hooks"
+import { useQuantityUpdate } from "./hooks"
 
 // ============================================================================
 // Cart Items List
@@ -21,7 +25,7 @@ export const CartItems = (props: CartItemsProps) => {
   const [local] = splitProps(props, ["class", "children"])
 
   return (
-    <Collection data={cart.items()}>
+    <Collection data={cart.items}>
       {local.children}
     </Collection>
 
@@ -41,7 +45,7 @@ export const CartItemCheckbox = (props: { class?: string }) => {
       type="checkbox"
       checked={item()?.selected ?? false}
       class={cn("size-5", props.class)}
-      onChange={() => item()?.productId && cart.toggleSelected(item()!.productId)}
+      onChange={() => item()?.id && cart.toggleSelected(item()!.id)}
     />
   )
 }
@@ -175,8 +179,9 @@ export const CartCheckoutTrigger = (rawProps: CartCheckoutTriggerProps) => {
   return (
     <Show when={!cart.isEmpty()}>
       <Button
-        {...others}
+        as={Link}
         onClick={local.onClick}
+        {...others}
       >
         {local.children ?? "Proceed to Checkout"}
       </Button>
@@ -192,17 +197,17 @@ export type CartClearTriggerProps = ComponentProps<typeof Button>
 
 export const CartClearTrigger = (rawProps: CartClearTriggerProps) => {
   const cart = useCart()
-  const [local, others] = splitProps(rawProps, ["children", "onClick"])
+  const [local, others] = splitProps(rawProps, ["children", "onClick", "variant"])
 
   return (
     <Show when={!cart.isEmpty()}>
       <Button
-        {...others}
-        variant="outline"
+        variant={local.variant ?? "outline"}
         onClick={(e) => {
           local.onClick?.(e)
           cart.clear()
         }}
+        {...others}
       >
         {local.children ?? "Clear Cart"}
       </Button>
@@ -210,5 +215,214 @@ export const CartClearTrigger = (rawProps: CartClearTriggerProps) => {
   )
 }
 
+// ============================================================================
+// Cart Item Quantity Components
+// ============================================================================
 
+export type CartItemActionProps = Omit<ButtonProps<"button">, "onClick"> & {
+  onClick?: (e: MouseEvent) => void
+  href?: string
+  children?: JSX.Element
+}
+
+export const CartItemActionWrapper = (props: { class?: string; children?: JSX.Element } & JSX.HTMLAttributes<HTMLDivElement>) => {
+  const [local, others] = splitProps(props, ["children", "class"])
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
+      class={local.class}
+      {...others}
+    >
+      {local.children}
+    </div>
+  )
+}
+
+export const CartItemQuantity = () => {
+  const p = useResolvedProduct()
+  const cart = useCart()
+  return (
+    <>{String(cart.find(p()?.id ?? "")?.quantity ?? 1)}</>
+  )
+}
+
+export const CartItemQuantityDecrement = (props: { class?: string; children?: JSX.Element }) => {
+  const p = useResolvedProduct()
+  const cart = useCart()
+  const updateQty = useQuantityUpdate()
+  const handleClick = async () => {
+    const resolved = p()
+    if (!resolved?.id) return
+    const cur = cart.find(resolved.id)?.quantity ?? 1
+    await updateQty(Math.max(0, cur - 1))
+  }
+
+  return (
+    <CartItemActionWrapper>
+      <MutationProvider mutationFn={handleClick}>
+        {props.children ?? (
+          <MutationButton variant="ghost" class={cn("p-1 w-8", props.class)}>
+            −
+          </MutationButton>
+        )}
+      </MutationProvider>
+    </CartItemActionWrapper>
+  )
+}
+
+export const CartItemQuantityIncrement = (props: { class?: string; children?: JSX.Element }) => {
+  const p = useResolvedProduct()
+  const cart = useCart()
+  const updateQty = useQuantityUpdate()
+  const handleClick = async () => {
+    const resolved = p()
+    if (!resolved?.id) return
+    const cur = (cart.find(resolved.id)?.quantity ?? 1) + 1
+    await updateQty(cur)
+  }
+
+  return (
+    <CartItemActionWrapper>
+      <MutationProvider mutationFn={handleClick}>
+        {props.children ?? (
+          <MutationButton variant="ghost" class={cn("p-1 w-8", props.class)}>
+            +
+          </MutationButton>
+        )}
+      </MutationProvider>
+    </CartItemActionWrapper>
+  )
+}
+
+export const CartItemQuantityInput = (props: { class?: string } & JSX.IntrinsicElements["input"]) => {
+  const [local, others] = splitProps(props, ["class", "value", "onInput", "onClick"])
+  const p = useResolvedProduct()
+  const cart = useCart()
+
+  const displayQty = createMemo(() => {
+    const resolved = p()
+    if (!resolved) return 1
+    return cart.find(resolved.id)?.quantity ?? 1
+  })
+
+  const updateQty = useQuantityUpdate()
+  const handleChange = (e: Event) => {
+    const target = e.currentTarget as HTMLInputElement
+    const value = parseInt(target.value)
+    const qty = isNaN(value) || value < 1 ? 1 : value
+    const resolved = p()
+    if (!resolved) return
+    updateQty(qty)
+  }
+
+  return (
+    <CartItemActionWrapper>
+      <input
+        type="number"
+        value={displayQty()}
+        onInput={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        class={cn("w-16 h-8 text-center border rounded", local.class)}
+        {...others}
+      />
+    </CartItemActionWrapper>
+  )
+}
+
+export interface CartItemQuantityActionsProps {
+  class?: string
+  children?: JSX.Element
+}
+
+export const CartItemQuantityActions = (props: CartItemQuantityActionsProps) => {
+  const [local, others] = splitProps(props, ["class"])
+  return (
+    <div
+      class={cn(
+        "hidden group-data-[in-cart]:flex ring ring-1 ring-primary rounded-lg h-8 items-center",
+        local.class
+      )}
+      {...others}
+    />
+  )
+}
+
+export type CartItemQuantitySelectProps = {
+  options?: string[]
+  class?: string
+  children?: JSX.Element
+}
+
+export const CartItemQuantitySelect = (props: CartItemQuantitySelectProps) => {
+  const [local] = splitProps(props, ['options', 'class', 'children'])
+  const p = useResolvedProduct()
+  const cart = useCart()
+
+  const max = () => {
+    const resolved = p()
+    return resolved?.stockQuantity ?? 10
+  }
+
+  const cur = createMemo(() => {
+    const resolved = p()
+    if (!resolved?.id) return 1
+    return cart.find(resolved.id)?.quantity ?? 1
+  })
+
+  const defaultOptions = createMemo(() => {
+    const count = max()
+    const qty = cur()
+    const set = new Set<number>()
+    for (const n of [1, 2, 3, 4, 5, 10, 15, 20, 25, 50]) {
+      if (n <= count) set.add(n)
+    }
+    if (qty <= count && qty >= 1) set.add(qty)
+    if (count >= 1) set.add(count)
+    return [...set].sort((a, b) => a - b).map(String)
+  })
+
+  const options = () => local.options ?? defaultOptions()
+
+  const updateQty = useQuantityUpdate()
+  const handleChange = (v: string) => {
+    const value = parseInt(v)
+    const resolved = p()
+    if (!resolved?.id) return
+    updateQty(value)
+  }
+
+  return (
+    <Select<string>
+      options={options()}
+      value={String(cur())}
+      onChange={handleChange}
+      class={local.class}
+    >
+      {local.children}
+    </Select>
+  )
+}
+
+// ============================================================================
+// Cart Item Remove
+// ============================================================================
+
+export const CartItemRemove = (props: { class?: string; children?: JSX.Element }) => {
+  const p = useResolvedProduct()
+  const cart = useCart()
+
+  const handleClick = async () => {
+    const resolved = p()
+    if (!resolved?.id) return
+    await cart.remove({ productId: resolved.id })
+  }
+
+  return (
+    <CartItemActionWrapper class="hidden group-data-[in-cart]:block">
+      <MutationProvider mutationFn={handleClick}>
+        {props.children}
+      </MutationProvider>
+    </CartItemActionWrapper>
+  )
+}
 

@@ -1,5 +1,5 @@
-export const PRODUCT_FIELDS = `
-  fragment ProductFields on Product {
+export const PRODUCT_BASIC_FIELDS = `
+  fragment ProductBasicFields on Product {
     id
     name
     slug
@@ -13,18 +13,39 @@ export const PRODUCT_FIELDS = `
     brand
     vendor
     productType
+    image
+    sku
+    price
+    compareToPrice
+    stockQuantity
+    reservedQuantity
+    weight
+    lowStockThreshold
+    outOfStockThreshold
+  }
+`
+
+export const PRODUCT_DETAIL_FIELDS = `
+  fragment ProductDetailFields on Product {
+    ...ProductBasicFields
+    options
+    optionValues
     priceRange { min max }
+    reviewStats { averageRating totalCount }
     media { id url type mimeType alt displayOrder }
+    metadata
     variants {
       id
+      parentId
       price
       compareToPrice
       image
       sku
       stockQuantity
+      reservedQuantity
       weight
+      optionValues
     }
-    metadata
   }
 `
 
@@ -67,6 +88,24 @@ export const CART_FIELDS = `
       selected
       price
       subtotal
+      metadata
+      product {
+        id
+        parentId
+        slug
+        description 
+        sku 
+        name
+        image
+        options
+        priceRange { min max }
+        price
+        compareToPrice
+        sku
+        stockQuantity
+        weight
+        optionValues
+      }
     }
   }
 `
@@ -138,11 +177,18 @@ export const ORDER_FIELDS = `
     currency
     paid
     trackingNumber
+    deliveryMethod
+    deliveryLocation
+    deliveryZone
+    email
+    name
     items {
       productName
       quantity
       price
       subtotal
+      productSku
+      metadata
     }
   }
 `
@@ -187,7 +233,8 @@ export const STORE_FIELDS = `
     name
     currency
     domainName
-    description
     isInMaintenanceMode
+    logoUrl
+    faviconUrl
   }
 `

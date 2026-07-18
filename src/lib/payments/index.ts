@@ -1,9 +1,10 @@
 "use server";
 
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { CHECKOUT_MUTATION, CLEAR_SELECTED_CART_ITEMS_MUTATION } from "~/lib/graphql/queries"
 import { cartsApi } from "~/lib/api/carts"
-import type { AddressInput, CheckoutInput, CheckoutItemInput, CheckoutResult } from "~/lib/types"
+import { getRequestEvent } from "solid-js/web"
+import type { CheckoutInput, CheckoutItemInput, CheckoutResult } from "~/lib/types"
 
 export type PaymentProvider = "mpesa"
 
@@ -16,6 +17,7 @@ export interface PaymentPayload {
   phone: string
   email?: string
   metadata?: Record<string, string>
+  callbackUrl?: string
 }
 
 export interface PaymentResult {
@@ -33,72 +35,45 @@ export interface CheckoutFormData {
   provider: string
   paymentPhone: string
   deliveryMethod: string
-  deliveryMethodId?: string
-  deliveryZoneId?: string
-  deliveryCountry: string
-  deliveryCity: string
+  deliveryLocation: string
+  deliveryZone: string
   shippingAddress: Record<string, string>
   billingAddress: Record<string, string>
   notes: string
   directBuy?: {
     productId: string
-    variantId?: string
     quantity: number
+    subtotal: string
   }
 }
 
-function buildAddress(addr: Record<string, string>): AddressInput | undefined {
-  const hasContent = addr.street || addr.city || addr.state || addr.zip || addr.country
-  if (!hasContent) return undefined
-  return {
-    street: addr.street || undefined,
-    city: addr.city || undefined,
-    state: addr.state || undefined,
-    zip: addr.zip || undefined,
-    country: addr.country || undefined,
-  }
+function hasAny(r: Record<string, string>): boolean {
+  return Object.values(r).some(v => v !== undefined && v !== null && v !== "")
 }
 
-export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutResult> {
+export async function submitCheckout(data: CheckoutFormData, timeoutMinutes = 15): Promise<CheckoutResult & { message: string }> {
   let items: CheckoutItemInput[]
 
   if (data.directBuy) {
-    const { productId, variantId, quantity } = data.directBuy
-    const res = await executeGQL<{ product: { id: string; name: string; variants: { id: string; price: string; sku: string }[] } }>(
-      `query Product($id: String!) { product(id: $id) { id name variants { id price sku } } }`,
-      { id: productId },
-    )
-    const product = res.product
-    const variant = variantId
-      ? product.variants.find((v) => v.id === variantId)
-      : product.variants[0]
-    const price = variant?.price ?? "0.00"
-    const subtotal = (parseFloat(price) * quantity).toFixed(2)
-
+    const { productId, quantity, subtotal } = data.directBuy
     items = [{
       productId,
-      variantId: variant?.id,
-      productName: product.name,
-      price,
       quantity,
       subtotal,
-      variantSku: variant?.sku,
     }]
   } else {
     const cart = await cartsApi.get()
     if (!cart || !cart.items.length) {
-      return { success: false, status: "Cart is empty" }
+      return { success: false, status: "Cart is empty", message: "Cart is empty" }
     }
 
     items = cart.items
       .filter((item) => item.selected !== false)
       .map((item) => ({
-        productId: item.productId ?? item.id ?? "",
-        variantId: item.variantId ?? undefined,
-        productName: item.product?.name ?? "",
-        price: item.price ?? "0.00",
+        productId: item.productId,
         quantity: item.quantity,
         subtotal: item.subtotal ?? "0.00",
+        metadata: item.metadata ?? undefined,
       }))
   }
 
@@ -117,13 +92,12 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
     paymentPhone: data.paymentPhone || undefined,
     customerEmail: data.email || undefined,
     deliveryMethod: data.deliveryMethod || undefined,
-    deliveryMethodId: data.deliveryMethodId || undefined,
-    deliveryZoneId: data.deliveryZoneId || undefined,
-    deliveryCountry: data.deliveryCountry || undefined,
-    deliveryCity: data.deliveryCity || undefined,
-    shippingAddress: buildAddress(data.shippingAddress),
-    billingAddress: buildAddress(data.billingAddress),
+    deliveryLocation: data.deliveryLocation || undefined,
+    deliveryZone: data.deliveryZone || undefined,
+    shippingAddress: hasAny(data.shippingAddress) ? JSON.stringify(data.shippingAddress) : undefined,
+    billingAddress: hasAny(data.billingAddress) ? JSON.stringify(data.billingAddress) : undefined,
     name: data.name || undefined,
+    timeoutMinutes: timeoutMinutes ?? undefined,
     phone: data.phone || undefined,
     notes: data.notes || undefined,
   }
@@ -132,21 +106,30 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
   const result = res.checkout
 
   if (result.success) {
-    executeGQL(CLEAR_SELECTED_CART_ITEMS_MUTATION).catch(() => {})
+    if (data.provider === "mpesa") {
+      const event = getRequestEvent()
+      const host = event?.request.headers.get("host")
+      const callbackUrl = host
+        ? `${host.includes("localhost") ? "http" : "https"}://${host}`
+        : undefined
+      processPayment("mpesa", {
+        orderId: result.orderId!,
+        orderNumber: result.orderNumber!,
+        paymentId: result.paymentId!,
+        amount: result.total!,
+        currency: result.currency!,
+        phone: data.paymentPhone,
+        callbackUrl,
+      }).catch(() => { })
+    }
+    return {
+      ...result,
+      message: `Order #${result.orderNumber} confirmed!` +
+        (result.total ? ` Total: ${result.total} ${result.currency}` : ""),
+    }
   }
 
-  if (result.success && data.provider === "mpesa") {
-    processPayment("mpesa", {
-      orderId: result.orderId!,
-      orderNumber: result.orderNumber!,
-      paymentId: result.paymentId!,
-      amount: result.total!,
-      currency: result.currency!,
-      phone: data.paymentPhone,
-    }).catch(() => { })
-  }
-
-  return result
+  return { ...result, message: result.status ?? "Checkout failed" }
 }
 
 async function mpesa(payload: PaymentPayload): Promise<PaymentResult> {

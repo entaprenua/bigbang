@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import {
   REVIEWS_BY_PRODUCT_QUERY, REVIEW_STATS_QUERY,
   CREATE_REVIEW_MUTATION, UPDATE_REVIEW_MUTATION, DELETE_REVIEW_MUTATION,

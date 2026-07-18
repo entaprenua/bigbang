@@ -33,7 +33,9 @@ export async function executeGQL<T = unknown>(
     event.response.headers.set("set-cookie", existing ? `${existing}, ${setCookie}` : setCookie)
   }
 
-  const json = await res.json() as { data?: T; errors?: { message: string }[] }
+  const text = await res.text()
+  if (!text) return undefined as T
+  const json = JSON.parse(text) as { data?: T; errors?: { message: string }[] }
   if (json.errors?.length) {
     throw new Error(json.errors.map(e => e.message).join("\n"))
   }

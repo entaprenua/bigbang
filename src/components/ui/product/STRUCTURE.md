@@ -21,7 +21,7 @@ components/ui/product/
 ├── product-context.tsx       # Context + useProduct() hook
 ├── product-root.tsx          # Main Product component
 ├── product-sections.tsx       # All product section components
-├── product-list.tsx          # ProductList
+├── product-list.tsx          # Products
 ├── product-media.tsx         # ProductMedia + ProductMediaItem
 ├── product-variant.tsx       # ProductVariantProvider + option selectors
 ├── product-filter-context.tsx # ProductFilterProvider + useProductFilters()
@@ -66,19 +66,19 @@ Product (provides ProductProvider context)
 │       ├── ProductStockBadge
 │       ├── ProductStockCount
 │       └── ProductActionWrapper (wraps all triggers)
-│           ├── ProductAddToCartTrigger
-│           ├── ProductRemoveFromCartTrigger
-│           ├── ProductAddToWishlistTrigger
-│           ├── ProductRemoveFromWishlistTrigger
-│           ├── ProductToggleWishlistTrigger
-│           ├── ProductOrderTrigger
+│           ├── ProductAddToCart
+│           ├── ProductRemoveFromCart
+│           ├── ProductAddToWishlist
+│           ├── ProductRemoveFromWishlist
+│           ├── ProductToggleWishlist
+│           ├── ProductOrder
 │           └── ProductQuantityActions
-│               ├── ProductQuantityDecrementTrigger
+│               ├── ProductQuantityDecrement
 │               ├── ProductQuantityInput
-│               └── ProductQuantityIncrementTrigger
+│               └── ProductQuantityIncrement
 
 ProductSearch (Typesense autocomplete, navigates to ?search=...)
-└── ProductList (reads params.search from router, refetches on URL change)
+└── Products (reads params.search from router, refetches on URL change)
 
 ProductFilterProvider (URL-synced state)
 ├── ProductFilterOptionSelect / RadioGroup / SegmentedControl
@@ -86,11 +86,11 @@ ProductFilterProvider (URL-synced state)
 ├── ProductFilterPriceMin / Max
 ├── ProductFilterAppliedChips / Chip / Label / Value / Remove
 ├── ProductFilterClearAll
-└── ProductList (auto-reads filters from context)
+└── Products (auto-reads filters from context)
 
-ProductList
+Products
 ├── Collection (data fetching)
-├── CollectionView (layout)
+├── CollectionItems (layout)
 │   └── Product (per item)
 ├── CollectionContent (non-empty gate)
 └── CollectionEmpty (empty gate)
@@ -102,7 +102,7 @@ ProductPaginationProvider (wraps list + buttons, provides cursor context)
 
 ProductMedia
 ├── Collection (iterates product.media or selectedVariant.media)
-├── CollectionView
+├── CollectionItems
 └── ProductMediaItem (renders image/video/audio)
 ```
 
@@ -112,8 +112,8 @@ ProductMedia
 
 ```tsx
 import { ProductSearch } from "./product-search"
-import { ProductList } from "./product-list"
-import { CollectionView, CollectionContent, CollectionEmpty } from "../collection"
+import { Products } from "./product-list"
+import { CollectionItems, CollectionContent, CollectionEmpty } from "../collection"
 import { ProductFilterProvider } from "./product-filter-context"
 import { ProductFilterOptionCheckboxGroup } from "./product-filter-options"
 import { ProductPaginationProvider } from "./product-pagination-context"
@@ -147,19 +147,19 @@ export default function ProductsPage() {
 
           <main class="flex-1">
             <ProductPaginationProvider>
-              <ProductList>
+              <Products>
                 <CollectionContent>
-                  <CollectionView class="grid grid-cols-4 gap-4">
+                  <CollectionItems class="grid grid-cols-4 gap-4">
                     <Product class="border rounded-lg p-4">
                       <ProductImage class="w-full aspect-square object-cover" />
                       <ProductName class="font-semibold mt-2" />
                       <ProductPrice class="text-lg font-bold" />
-                      <ProductAddToCartTrigger class="w-full mt-4" />
+                      <ProductAddToCart class="w-full mt-4" />
                     </Product>
-                  </CollectionView>
+                  </CollectionItems>
                 </CollectionContent>
                 <CollectionEmpty />
-              </ProductList>
+              </Products>
 
               <div class="flex items-center justify-between mt-6">
                 <ProductPaginationPrevious>Previous</ProductPaginationPrevious>
@@ -178,19 +178,19 @@ export default function ProductsPage() {
 ### Product List (All Products)
 
 ```tsx
-<ProductList>
+<Products>
   <Grid cols={4} gap={4}>
-    <CollectionView>
+    <CollectionItems>
       <Product class="border rounded-lg p-4">
         <ProductImage class="w-full aspect-square object-cover" />
         <ProductName class="font-semibold mt-2" />
         <ProductPrice class="text-lg font-bold" />
         
-        <ProductAddToCartTrigger class="w-full mt-4" />
+        <ProductAddToCart class="w-full mt-4" />
       </Product>
-    </CollectionView>
+    </CollectionItems>
   </Grid>
-</ProductList>
+</Products>
 ```
 
 ### Product List (Category Products)
@@ -200,36 +200,36 @@ Products inside a `<Category>` automatically fetch for that category:
 ```tsx
 <Category>
   {/* Products are fetched for this category */}
-  <ProductList>
+  <Products>
     <CollectionContent>
       <Grid cols={4} gap={4}>
-        <CollectionView>
+        <CollectionItems>
           <Product class="border rounded-lg p-4">
             <ProductImage class="w-full aspect-square object-cover" />
             <ProductName class="font-semibold mt-2" />
             <ProductPrice class="text-lg font-bold" />
-            <ProductAddToCartTrigger class="w-full mt-4" />
+            <ProductAddToCart class="w-full mt-4" />
           </Product>
-        </CollectionView>
+        </CollectionItems>
       </Grid>
     </CollectionContent>
-  </ProductList>
+  </Products>
   
   {/* Subcategories */}
   <SubcategoryList>
     <CollectionContent>
-      <CollectionView>
+      <CollectionItems>
         <Category>
           {/* Nested products for subcategory */}
-          <ProductList>
+          <Products>
             <CollectionContent>
-              <CollectionView>
+              <CollectionItems>
                 <Product />
-              </CollectionView>
+              </CollectionItems>
             </CollectionContent>
-          </ProductList>
+          </Products>
         </Category>
-      </CollectionView>
+      </CollectionItems>
     </CollectionContent>
   </SubcategoryList>
 </Category>
@@ -255,8 +255,8 @@ Products inside a `<Category>` automatically fetch for that category:
   
   <ProductQuantityActions class="mt-4" />
   
-  <ProductAddToCartTrigger class="w-full mt-4" />
-  <ProductAddToWishlistTrigger class="w-full mt-2" />
+  <ProductAddToCart class="w-full mt-4" />
+  <ProductAddToWishlist class="w-full mt-2" />
 </Product>
 ```
 
@@ -271,18 +271,18 @@ Triggers include data attributes for CSS-based visibility control:
   <ProductPrice />
   
   {/* Show/hide based on cart state via CSS */}
-  <ProductAddToCartTrigger 
+  <ProductAddToCart 
     class="data-[in-cart]:hidden w-full mt-4" 
   />
-  <ProductRemoveFromCartTrigger 
+  <ProductRemoveFromCart 
     class="hidden data-[in-cart]:block w-full mt-4" 
   />
   
   {/* Same pattern for wishlist */}
-  <ProductAddToWishlistTrigger 
+  <ProductAddToWishlist 
     class="data-[in-wishlist]:hidden w-full mt-2" 
   />
-  <ProductRemoveFromWishlistTrigger 
+  <ProductRemoveFromWishlist 
     class="hidden data-[in-wishlist]:block w-full mt-2" 
   />
 </Product>
@@ -307,7 +307,7 @@ Triggers include data attributes for CSS-based visibility control:
   </div>
   
   <ProductQuantityActions class="mt-3" />
-  <ProductAddToCartTrigger class="w-full mt-3" />
+  <ProductAddToCart class="w-full mt-3" />
 </Product>
 ```
 
@@ -330,16 +330,16 @@ ProductMedia iterates over `product.data.media` array:
 
 ```tsx
 <ProductMedia>
-  <CollectionView layout="grid" columns={4} gap={2}>
+  <CollectionItems layout="grid" columns={4} gap={2}>
     <ProductMediaItem />
-  </CollectionView>
+  </CollectionItems>
 </ProductMedia>
 
 // Or with custom item
 <ProductMedia>
-  <CollectionView>
+  <CollectionItems>
     <ProductMediaItem class="rounded-lg" />
-  </CollectionView>
+  </CollectionItems>
 </ProductMedia>
 
 // Using Image component (more robust)
@@ -372,10 +372,10 @@ type ProductRootProps = {
 }
 ```
 
-### ProductList
+### Products
 
 ```typescript
-type ProductListProps = {
+type ProductsProps = {
   storeId?: string
   categoryId?: string           // Fetch products for this category (reads from CategoryContext if omitted)
   filters?: ProductFilters
@@ -414,7 +414,7 @@ type ProductMediaItemProps = {
 
 ## Product Pagination
 
-Cursor-based pagination using `(insertedAt, id)` tuples. No page numbers — Next/Previous buttons only. `ProductList` wraps children in `ProductPaginationProvider`, which exposes cursor state to atomic components.
+Cursor-based pagination using `(insertedAt, id)` tuples. No page numbers — Next/Previous buttons only. `Products` wraps children in `ProductPaginationProvider`, which exposes cursor state to atomic components.
 
 ### Components
 
@@ -478,14 +478,14 @@ type ProductPaginationTotalProps = {
 
 ```tsx
 <ProductPaginationProvider>
-  <ProductList>
-    <CollectionView class="grid grid-cols-4 gap-4">
+  <Products>
+    <CollectionItems class="grid grid-cols-4 gap-4">
       <CollectionContent>
         <Product>...</Product>
       </CollectionContent>
-    </CollectionView>
+    </CollectionItems>
     <CollectionEmpty />
-  </ProductList>
+  </Products>
 
   <div class="flex items-center justify-between mt-6">
     <ProductPaginationPrevious>Previous</ProductPaginationPrevious>
@@ -497,8 +497,8 @@ type ProductPaginationTotalProps = {
 
 ### How it works
 
-1. User wraps `ProductList` and pagination buttons in `ProductPaginationProvider`
-2. `ProductList` reads `after`/`before` from context (optional — works without provider)
+1. User wraps `Products` and pagination buttons in `ProductPaginationProvider`
+2. `Products` reads `after`/`before` from context (optional — works without provider)
 3. Calls `productsApi.getAll(after, before, size, filters)` with cursors from context
 4. Response carries `nextCursor`, `previousCursor`, `hasNextPage`, `hasPreviousPage`
 5. `syncPage(response)` stores cursors — triggers `queryKey` change via `createMemo`
@@ -547,7 +547,7 @@ type ProductFilterContextValue = {
 }
 
 useProductFilters()         // throws if outside provider (for filter UI components)
-useProductFilterOptional()  // returns undefined (for ProductList auto-detection)
+useProductFilterOptional()  // returns undefined (for Products auto-detection)
 useProductFilterOptions()   // returns { options: (field) => string[], isLoading }
 
 // Shared hook (internal, used by Select/RadioGroup/SegmentedControl components)
@@ -591,14 +591,14 @@ The `Image` component automatically infers:
 
 ## ProductSearch
 
-ProductSearch provides a search bar with an autocomplete suggestions dropdown. It wraps `SearchProvider` internally with `productsApi.suggestions()` (Typesense-powered). On suggestion select or Enter key, it navigates to `?search=...` updating the URL, which triggers `ProductList` to refetch.
+ProductSearch provides a search bar with an autocomplete suggestions dropdown. It wraps `SearchProvider` internally with `productsApi.suggestions()` (Typesense-powered). On suggestion select or Enter key, it navigates to `?search=...` updating the URL, which triggers `Products` to refetch.
 
 ### Flow
 
 ```
 User types "nike" → Typesense autocomplete → ["Nike Air Max", "Nike Revolution", ...]
 User clicks suggestion or presses Enter → navigate("?search=Nike+Air+Max")
-ProductList reads params.search from router → queryKey updates → re-fetches products
+Products reads params.search from router → queryKey updates → re-fetches products
 ```
 
 ```typescript
@@ -639,10 +639,10 @@ function SearchSuggestion() {
 
 | Endpoint | Component Usage |
 |----------|-----------------|
-| `products(filters, pagination)` | `ProductList` fetches all products |
-| `products(filters: { brand: "Nike", sortBy: "price" })` | `ProductList` with `ProductFilterProvider` context |
-| `products(filters: { categoryId: "..." })` | `ProductList` inside `<Category>` |
-| `products(filters: { search: "..." }, pagination: { after, before })` | `ProductList` — cursor-based pagination |
+| `products(filters, pagination)` | `Products` fetches all products |
+| `products(filters: { brand: "Nike", sortBy: "price" })` | `Products` with `ProductFilterProvider` context |
+| `products(filters: { categoryId: "..." })` | `Products` inside `<Category>` |
+| `products(filters: { search: "..." }, pagination: { after, before })` | `Products` — cursor-based pagination |
 | `productFilterOptions(fields: ["brands","vendors"])` | `useProductFilterOptions()` — auto-fetches filter values |
 | `productSuggestions(query, limit)` | `ProductSearch` — autocomplete suggestions from Typesense |
 
@@ -705,7 +705,7 @@ Product (provides ProductProvider context)
   <ProductImage class="w-full aspect-square" />
   <ProductName class="text-2xl font-bold" />
   <ProductPrice class="text-3xl font-bold" />
-  <ProductAddToCartTrigger />
+  <ProductAddToCart />
 </Product>
 ```
 
@@ -721,7 +721,7 @@ Product (provides ProductProvider context)
 
 ### How sections auto-switch
 
-All variant-dependent sections (`ProductImage`, `ProductPrice`, `ProductSku`, `ProductComparePrice`, `ProductDiscount`, `ProductMedia`, `ProductAddToCartTrigger`, `ProductOrderTrigger`) read `selectedVariant()` first, fallback to `variants?.[0]`. Zero changes needed in user code.
+All variant-dependent sections (`ProductImage`, `ProductPrice`, `ProductSku`, `ProductComparePrice`, `ProductDiscount`, `ProductMedia`, `ProductAddToCart`, `ProductOrder`) read `selectedVariant()` first, fallback to `variants?.[0]`. Zero changes needed in user code.
 
 No variant selector → falls back to first variant. With `ProductVariantProvider` → auto-switches on option change.
 
@@ -729,7 +729,7 @@ No variant selector → falls back to first variant. With `ProductVariantProvide
 
 ## Product Filters
 
-URL-synced filter system. `ProductFilterProvider` holds state, syncs to `?brand=Nike&sortBy=price` URL params, `ProductList` auto-detects provider and reads filters automatically.
+URL-synced filter system. `ProductFilterProvider` holds state, syncs to `?brand=Nike&sortBy=price` URL params, `Products` auto-detects provider and reads filters automatically.
 
 ### Architecture
 
@@ -755,7 +755,7 @@ ProductFilterProvider (state + URL sync)
   │   │       ├── ProductFilterAppliedChipValue
   │   │       └── ProductFilterAppliedChipRemove
   │   └── ProductFilterClearAll
-  └── ProductList (reads filters from context automatically)
+  └── Products (reads filters from context automatically)
 ```
 
 ### Usage
@@ -808,20 +808,20 @@ ProductFilterProvider (state + URL sync)
       </ProductFilterAppliedChip>
     </ProductFilterAppliedChips>
 
-    <ProductList>
+    <Products>
       <CollectionContent>
         <div class="grid grid-cols-3 gap-4">
-          <CollectionView>
+          <CollectionItems>
             <Product>...</Product>
-          </CollectionView>
+          </CollectionItems>
         </div>
       </CollectionContent>
-    </ProductList>
+    </Products>
   </main>
 </ProductFilterProvider>
 ```
 
-**Note:** `ProductList` auto-detects `ProductFilterProvider` in the tree — no explicit `filters` prop needed. Still accepts explicit `filters` prop for standalone use.
+**Note:** `Products` auto-detects `ProductFilterProvider` in the tree — no explicit `filters` prop needed. Still accepts explicit `filters` prop for standalone use.
 
 `options` prop is optional on all filter option components. When omitted, values are auto-fetched from the `productFilterOptions(fields)` GraphQL endpoint, which returns distinct non-null values for the store's products. Explicit `options` prop always wins.
 
@@ -892,10 +892,10 @@ type ProductFilters = {
 | `ProductFilterAppliedChipRemove` | Button that calls `removeFilter(key)` or `toggleFilter(key, value)` for arrays. |
 | `ProductFilterClearAll` | Button to reset all filters. `children` overrides text, `class` styles. |
 
-### How ProductList reads filters
+### How Products reads filters
 
 ```typescript
-// Inside ProductList (auto-detected):
+// Inside Products (auto-detected):
 const filterCtx = useProductFilterOptional()
 const filters = () => filterCtx?.filters() ?? /* explicit props.filters */
 
@@ -923,6 +923,6 @@ const key = createMemo(() => {
 ```tsx
 // Future usage
 <ProductActionWrapper mutationFn={() => addToCart()}>
-  <ProductAddToCartTrigger />
+  <ProductAddToCart />
 </ProductActionWrapper>
 ```

@@ -4,5 +4,7 @@ export {
   StoreDescription,
   StoreDomain,
   StoreMaintenanceBadge,
+  StoreLogo,
+  StoreFavicon,
 } from "./store-sections"
 export type { StoreContextValue, StoreProviderProps } from "./store-context"

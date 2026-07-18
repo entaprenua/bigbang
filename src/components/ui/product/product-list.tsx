@@ -9,7 +9,7 @@ import { productsApi, type ProductFilters } from "~/lib/api/products"
 import type { Product, ProductConnection } from "~/lib/types"
 import { useProductPaginationOptional } from "./product-pagination-context"
 
-type ProductListProps = {
+type ProductsProps = {
   storeId?: string
   categoryId?: string
   filters?: ProductFilters
@@ -19,7 +19,7 @@ type ProductListProps = {
   children?: JSX.Element
 }
 
-const ProductList = (props: ProductListProps) => {
+const Products = (props: ProductsProps) => {
   const [local] = splitProps(props, [
     "storeId",
     "categoryId",
@@ -86,5 +86,5 @@ const ProductList = (props: ProductListProps) => {
   )
 }
 
-export { ProductList }
-export type { ProductListProps }
+export { Products }
+export type { ProductsProps }

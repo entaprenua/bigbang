@@ -24,30 +24,30 @@ The main component that provides context and handles data:
   queryFn={fetchFn}      // OR remote fetch function
 >
   <Grid cols={4}>
-    <CollectionView>
+    <CollectionItems>
       {item => <ProductCard item={item} />}
-    </CollectionView>
+    </CollectionItems>
   </Grid>
 </Collection>
 ```
 
-### CollectionView
+### CollectionItems
 
 Renders the data for each item inside the layout wrapper. When children is a function, it's called with `(item, index)`. When children is static JSX, it's wrapped in `CollectionItem` for context access.
 
 ```tsx
 // With function children
 <Grid cols={4}>
-  <CollectionView>
+  <CollectionItems>
     {item => <MyItem item={item} />}  // Function receives item
-  </CollectionView>
+  </CollectionItems>
 </Grid>
 
 // With static children (uses CollectionItemContext)
 <Grid cols={4}>
-  <CollectionView>
+  <CollectionItems>
     <MyItem />  // Reads from useCollectionItem()
-  </CollectionView>
+  </CollectionItems>
 </Grid>
 ```
 
@@ -72,7 +72,7 @@ const collectionItem = useCollectionItem()
 
 ## Layout Wrappers
 
-Layout is controlled by wrapping `CollectionView` with your preferred layout component:
+Layout is controlled by wrapping `CollectionItems` with your preferred layout component:
 
 | Component | Usage | Description |
 |----------|-------|-------------|
@@ -126,10 +126,10 @@ type CollectionProps = {
 }
 ```
 
-### CollectionView
+### CollectionItems
 
 ```typescript
-type CollectionViewProps = {
+type CollectionItemsProps = {
   class?: string
   children?: JSX.Element | ((item: any, index: number) => JSX.Element)
 }
@@ -169,13 +169,13 @@ type CollectionContentProps = {
 **Usage:**
 
 ```tsx
-<CategoryList>
+<Categories>
   <CollectionContent>
-    <CollectionView>
+    <CollectionItems>
       <Category />
-    </CollectionView>
+    </CollectionItems>
   </CollectionContent>
-</CategoryList>
+</Categories>
 ```
 
 ## Usage Examples
@@ -185,9 +185,9 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={products}>
   <Grid cols={4} gap={4}>
-    <CollectionView>
+    <CollectionItems>
       {product => <ProductCard product={product} />}
-    </CollectionView>
+    </CollectionItems>
   </Grid>
 </Collection>
 ```
@@ -197,9 +197,9 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={products}>
   <Flex gap={4}>
-    <CollectionView>
+    <CollectionItems>
       {product => <ProductCard product={product} />}
-    </CollectionView>
+    </CollectionItems>
   </Flex>
 </Collection>
 ```
@@ -209,11 +209,11 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={products}>
   <CarouselContent>
-    <CollectionView>
+    <CollectionItems>
       <CarouselItem class="basis-1/4">
         {product => <ProductCard product={product} />}
       </CarouselItem>
-    </CollectionView>
+    </CollectionItems>
   </CarouselContent>
 </Collection>
 ```
@@ -223,9 +223,9 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={items}>
   <Grid cols={4}>
-    <CollectionView>
+    <CollectionItems>
       <MyItem />  // uses useCollectionItem() internally
-    </CollectionView>
+    </CollectionItems>
   </Grid>
 </Collection>
 ```
@@ -235,14 +235,14 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={items}>
   <Grid cols={4}>
-    <CollectionView>
+    <CollectionItems>
       {(item, index) => (
         <div class="item">
           <span>{index}</span>
           <span>{item.name}</span>
         </div>
       )}
-    </CollectionView>
+    </CollectionItems>
   </Grid>
 </Collection>
 ```
@@ -255,9 +255,9 @@ type CollectionContentProps = {
   queryKey={["products"]}
 >
   <Grid cols={4} gap={4}>
-    <CollectionView>
+    <CollectionItems>
       {product => <ProductCard product={product} />}
-    </CollectionView>
+    </CollectionItems>
   </Grid>
 </Collection>
 ```
@@ -267,9 +267,9 @@ type CollectionContentProps = {
 ```tsx
 <Collection data={items}>
   <Grid cols={4}>
-    <CollectionView>
+    <CollectionItems>
       {item => <ItemCard item={item} />}
-    </CollectionView>
+    </CollectionItems>
   </Grid>
   <CollectionEmpty>
     <p>No items found</p>
@@ -287,7 +287,7 @@ Collection
 │           └── CollectionContext.Provider
 │               └── children
 │                   └── Layout Wrapper (Grid, Flex, Carousel, etc.)
-│                       └── CollectionView
+│                       └── CollectionItems
 │                           └── CollectionItem (per item)
 │                               └── CollectionItemContext.Provider
 │                                   └── children
@@ -295,7 +295,7 @@ Collection
 
 ## Best Practices
 
-1. **Wrap CollectionView with a layout component** - Grid, Flex, Carousel, or custom
+1. **Wrap CollectionItems with a layout component** - Grid, Flex, Carousel, or custom
 2. **Use function children for explicit data passing** - Clearer, more type-safe
 3. **Use static children with useCollectionItem()** - For reusable components that auto-detect context
 4. **Specify queryFn for remote data** - Automatic loading/error states
@@ -306,7 +306,7 @@ Collection
 export {
   Collection,
   CollectionItem,
-  CollectionView,
+  CollectionItems,
   CollectionContent,
   CollectionEmpty,
   useCollection,
@@ -315,7 +315,7 @@ export {
 }
 
 export type {
-  CollectionViewProps,
+  CollectionItemsProps,
   CollectionItemProps,
   CollectionContentProps,
 }

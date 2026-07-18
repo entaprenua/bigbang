@@ -6,17 +6,17 @@ import * as RadioGroupPrimitive from "@kobalte/core/radio-group"
 
 import { cn } from "~/lib/utils"
 
-type RadioGroupOption = string | { value: string; label: string }
+type RadioGroupOption = string | { value: string; label: string; disabled?: boolean }
 
 type RadioGroupContextValue = { options: () => RadioGroupOption[] | undefined; value: () => string | undefined }
 const RadioGroupContext = createContext<RadioGroupContextValue>()
 
-type RadioGroupItemContextValue = { value: string; label?: string }
+type RadioGroupItemContextValue = { value: string; label?: string; disabled?: boolean }
 const RadioGroupItemContext = createContext<RadioGroupItemContextValue | undefined>()
 
-function RadioGroupItemsProvider(props: { value: string; label?: string; children?: JSX.Element }) {
+function RadioGroupItemsProvider(props: { value: string; label?: string; disabled?: boolean; children?: JSX.Element }) {
   return (
-    <RadioGroupItemContext.Provider value={{ value: props.value, label: props.label }}>
+    <RadioGroupItemContext.Provider value={{ value: props.value, label: props.label, disabled: props.disabled }}>
       {props.children}
     </RadioGroupItemContext.Provider>
   )
@@ -45,10 +45,12 @@ function RadioGroupItems(props: { children?: JSX.Element }) {
   return (
     <For each={ctx.options()}>
       {(option) => {
-        const val = typeof option === "string" ? option : option.value
-        const label = typeof option === "string" ? undefined : option.label
+        const isString = typeof option === "string"
+        const val = isString ? option : option.value
+        const label = isString ? undefined : option.label
+        const disabled = isString ? undefined : option.disabled
         return (
-          <RadioGroupItemsProvider value={val} label={label}>
+          <RadioGroupItemsProvider value={val} label={label} disabled={disabled}>
             {props.children}
           </RadioGroupItemsProvider>
         )
@@ -58,25 +60,29 @@ function RadioGroupItems(props: { children?: JSX.Element }) {
 }
 
 type RadioGroupItemProps<T extends ValidComponent = "div"> =
-  RadioGroupPrimitive.RadioGroupItemProps<T> & {
+  Omit<RadioGroupPrimitive.RadioGroupItemProps<T>, "value" | "disabled"> & {
     class?: string | undefined
     children?: JSX.Element
+    value?: string
+    disabled?: boolean
   }
 
 const RadioGroupItem = <T extends ValidComponent = "div">(
   props: PolymorphicProps<T, RadioGroupItemProps<T>>
 ) => {
-  const [local, others] = splitProps(props as RadioGroupItemProps, ["class", "children", "value"])
+  const [local, others] = splitProps(props as RadioGroupItemProps, ["class", "children", "value", "disabled"])
   const itemCtx = useContext(RadioGroupItemContext)
   const resolvedValue = () => local.value ?? itemCtx?.value ?? ""
+  const resolvedDisabled = () => local.disabled ?? itemCtx?.disabled ?? false
   return (
     <RadioGroupPrimitive.Item
       value={resolvedValue()}
+      disabled={resolvedDisabled()}
       class={cn("flex items-center space-x-2", local.class)}
       {...others}
     >
       <RadioGroupPrimitive.ItemInput />
-      <RadioGroupPrimitive.ItemControl class="aspect-square size-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <RadioGroupPrimitive.ItemControl class="aspect-square size-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-disabled:cursor-not-allowed data-disabled:opacity-50">
         <RadioGroupPrimitive.ItemIndicator class="flex h-full items-center justify-center ">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +116,7 @@ const RadioGroupItemLabel = <T extends ValidComponent = "label">(
   return (
     <RadioGroupPrimitive.ItemLabel
       class={cn(
-        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        "text-sm font-medium leading-none data-disabled:cursor-not-allowed data-disabled:opacity-70",
         local.class
       )}
       {...others}
@@ -132,6 +138,8 @@ const RadioGroupItemInput = RadioGroupPrimitive.ItemInput
 const RadioGroupItemControl = RadioGroupPrimitive.ItemControl
 const RadioGroupItemIndicator = RadioGroupPrimitive.ItemIndicator
 const RadioGroupItemDescription = RadioGroupPrimitive.ItemDescription
+
+export type { RadioGroupRootProps, RadioGroupOption }
 
 export {
   RadioGroup,

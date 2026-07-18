@@ -19,7 +19,7 @@ components/ui/category/
 ├── index.ts                    # Barrel exports
 ├── category-context.tsx        # Context + useCategory() hook
 ├── category-root.tsx           # Category (CategoryRoot) — single category fetch
-├── category-list.tsx           # CategoryList, CategorySubcategories
+├── category-list.tsx           # Categories, CategorySubcategories
 ├── category-sections.tsx        # Atomic primitives (name, image, slug, etc.)
 └── STRUCTURE.md               # This file
 ```
@@ -27,9 +27,9 @@ components/ui/category/
 ## Core Pattern
 
 ```tsx
-<CategoryList>
+<Categories>
   <div class="space-y-4">
-    <CollectionView>
+    <CollectionItems>
       <Category class="border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <CategoryImage class="h-20 w-20 rounded" />
@@ -38,32 +38,32 @@ components/ui/category/
 
         <CategorySubcategories>
           <div class="ml-8 mt-3 space-y-2">
-            <CollectionView>
+            <CollectionItems>
               <Category class="border-l-2 border-muted pl-4 py-2">
                 <CategoryName class="text-sm" />
 
                 <CategorySubcategories>
                   <div class="ml-6 mt-2">
-                    <CollectionView>
+                    <CollectionItems>
                       <Category class="text-sm text-muted-foreground py-1">
                         <CategoryName />
                       </Category>
-                    </CollectionView>
+                    </CollectionItems>
                   </div>
                 </CategorySubcategories>
               </Category>
-            </CollectionView>
+            </CollectionItems>
           </div>
         </CategorySubcategories>
       </Category>
-    </CollectionView>
+    </CollectionItems>
   </div>
-</CategoryList>
+</Categories>
 ```
 
 ### How Auto-Nesting Works
 
-1. `CategoryList` fetches categories (root or full tree depending on `mode`)
+1. `Categories` fetches categories (root or full tree depending on `mode`)
 2. Each iteration provides a `Category` with context from the current item
 3. Nested `CategorySubcategories` reads the parent category ID via `useCategory()`
 4. `CategorySubcategories` fetches children, wraps each in a new `Category`
@@ -71,7 +71,7 @@ components/ui/category/
 
 ### Mode Behavior
 
-`CategoryList` accepts a `mode` prop that controls how data is fetched:
+`Categories` accepts a `mode` prop that controls how data is fetched:
 
 | Mode | API Call | Subcategories Source |
 |------|----------|---------------------|
@@ -82,12 +82,12 @@ In tree mode, `CategorySubcategories` reads from the already-fetched `category.c
 
 ## Components
 
-### CategoryList
+### Categories
 
 Fetches categories with mode control.
 
 ```typescript
-type CategoryListProps = {
+type CategoriesProps = {
   mode?: string         // "tree" (default) or "root"
   queryKey?: unknown[]
   enabled?: boolean
@@ -97,14 +97,14 @@ type CategoryListProps = {
 
 ```tsx
 // Tree mode — single API call, subcategories from .children
-<CategoryList mode="tree">
+<Categories mode="tree">
   ...
-</CategoryList>
+</Categories>
 
 // Root mode — per-level fetches
-<CategoryList mode="root">
+<Categories mode="root">
   ...
-</CategoryList>
+</Categories>
 ```
 
 ### CategorySubcategories
@@ -122,7 +122,7 @@ type CategorySubcategoriesProps = {
 
 ### Category (CategoryRoot)
 
-Exported as `Category` (alias for `CategoryRoot`). Fetches a single category by slug, or reads from `CategoryList` context, or accepts explicit `data`.
+Exported as `Category` (alias for `CategoryRoot`). Fetches a single category by slug, or reads from `Categories` context, or accepts explicit `data`.
 
 ```typescript
 type CategoryRootProps = {
@@ -137,7 +137,7 @@ type CategoryRootProps = {
 
 **Data resolution order:**
 1. If `data` is provided → use it directly
-2. If inside `CollectionView` → use the current collection item
+2. If inside `CollectionItems` → use the current collection item
 3. If `categorySlug` is set (or slug from route params) → fetch via `categoriesApi.getBySlug()`
 
 **Usage:**
@@ -213,10 +213,10 @@ All components read from `useCategoryData()` (prefers `CollectionItem`, falls ba
 Homepage-style grid of category image cards. Each card links to `/categories/<slug>`.
 
 ```tsx
-<CategoryList>
+<Categories>
     <CollectionContent>
       <Grid cols={2} colsMd={3} colsLg={4} class="gap-4">
-        <CollectionView>
+        <CollectionItems>
           <Category href="/categories" class="group">
             <div class="relative overflow-hidden rounded-xl aspect-square bg-muted">
               <CategoryImage class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -226,10 +226,10 @@ Homepage-style grid of category image cards. Each card links to `/categories/<sl
               </div>
             </div>
           </Category>
-        </CollectionView>
+        </CollectionItems>
       </Grid>
     </CollectionContent>
-</CategoryList>
+</Categories>
 ```
 
 ### Sidebar Navigation
@@ -237,15 +237,15 @@ Homepage-style grid of category image cards. Each card links to `/categories/<sl
 Text-only vertical list for sidebar/drawer navigation. Uses tree mode.
 
 ```tsx
-<CategoryList mode="tree">
-  <CollectionView class="flex flex-col gap-1">
+<Categories mode="tree">
+  <CollectionItems class="flex flex-col gap-1">
     <Category href="/categories" class="block">
       <div class="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors">
         <CategoryName />
       </div>
     </Category>
-  </CollectionView>
-</CategoryList>
+  </CollectionItems>
+</Categories>
 ```
 
 ### Recursive Tree with Depth Indicator
@@ -253,9 +253,9 @@ Text-only vertical list for sidebar/drawer navigation. Uses tree mode.
 Nested `CategorySubcategories` renders a depth-aware category tree. Each level is indented and styled differently.
 
 ```tsx
-<CategoryList>
+<Categories>
   <div class="space-y-4">
-    <CollectionView>
+    <CollectionItems>
       <Category class="border rounded-lg p-4">
         <div class="flex items-center gap-3">
           <CategoryDepth class="bg-muted w-8 h-8 rounded-full flex items-center justify-center text-sm" />
@@ -264,7 +264,7 @@ Nested `CategorySubcategories` renders a depth-aware category tree. Each level i
 
         <CategorySubcategories>
           <div class="ml-8 mt-4 space-y-2 border-l-2 border-muted pl-4">
-            <CollectionView>
+            <CollectionItems>
               <Category class="py-2">
                 <div class="flex items-center gap-2">
                   <CategoryDepth class="bg-muted w-6 h-6 rounded-full text-xs flex items-center justify-center" />
@@ -273,24 +273,24 @@ Nested `CategorySubcategories` renders a depth-aware category tree. Each level i
 
                 <CategorySubcategories>
                   <div class="ml-6 mt-2">
-                    <CollectionView>
+                    <CollectionItems>
                       <Category class="py-1 text-sm text-muted-foreground">
                         <div class="flex items-center gap-2">
                           <CategoryDepth class="bg-muted w-5 h-5 rounded-full text-xs flex items-center justify-center" />
                           <CategoryName />
                         </div>
                       </Category>
-                    </CollectionView>
+                    </CollectionItems>
                   </div>
                 </CategorySubcategories>
               </Category>
-            </CollectionView>
+            </CollectionItems>
           </div>
         </CategorySubcategories>
       </Category>
-    </CollectionView>
+    </CollectionItems>
   </div>
-</CategoryList>
+</Categories>
 ```
 
 ### Single Category Page
@@ -323,14 +323,14 @@ function CategoryPage() {
               <section>
                 <h2 class="text-xl font-semibold mb-4">Subcategories</h2>
                 <Grid cols={2} colsMd={3} colsLg={4} class="gap-4">
-                  <CollectionView>
+                  <CollectionItems>
                     <Category href="/categories" class="block bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow">
                       <CategoryImage class="w-full aspect-square object-cover" />
                       <div class="p-4">
                         <CategoryName class="font-medium text-center" />
                       </div>
                     </Category>
-                  </CollectionView>
+                  </CollectionItems>
                 </Grid>
               </section>
             </CollectionContent>
@@ -338,12 +338,12 @@ function CategoryPage() {
         </Category>
 
         {/* Products */}
-        <ProductList>
+        <Products>
           <CollectionContent>
             <section>
               <h2 class="text-xl font-semibold mb-4">Products</h2>
               <Grid cols={2} colsMd={3} colsLg={4} class="gap-4">
-                <CollectionView>
+                <CollectionItems>
                   <Product class="group bg-white rounded-lg border overflow-hidden hover:shadow-lg transition-shadow">
                     <div class="relative overflow-hidden">
                       <ProductImage class="w-full aspect-square object-cover group-hover:scale-105 transition-transform" />
@@ -355,15 +355,15 @@ function CategoryPage() {
                         <ProductComparePrice class="text-sm text-muted-foreground" />
                       </div>
                       <div class="mt-4">
-                        <ProductAddToCartTrigger class="w-full" />
+                        <ProductAddToCart class="w-full" />
                       </div>
                     </div>
                   </Product>
-                </CollectionView>
+                </CollectionItems>
               </Grid>
             </section>
           </CollectionContent>
-        </ProductList>
+        </Products>
       </div>
     </div>
   )
@@ -374,8 +374,8 @@ function CategoryPage() {
 
 | Component | Exported As | Key Props |
 |-----------|------------|-----------|
-| `CategoryList` | `CategoryList` | `mode`, `queryKey`, `enabled` |
-| `CollectionView` | — | from `collection/index.tsx` |
+| `Categories` | `Categories` | `mode`, `queryKey`, `enabled` |
+| `CollectionItems` | — | from `collection/index.tsx` |
 | `CategorySubcategories` | `CategorySubcategories` | `queryKey`, `enabled`, `class` |
 | `Category` | `Category`, `CategoryRoot` | `categorySlug`, `data`, `href`, `queryKey`, `class` |
 | `CollectionContent` | — | from `collection/index.tsx` |

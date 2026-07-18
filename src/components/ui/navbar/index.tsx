@@ -72,7 +72,7 @@ type NavbarContentProps = ComponentProps<"div">
 export function NavbarContent(props: NavbarContentProps) {
   const [local, others] = splitProps(props, ["class", "children"])
   return (
-    <Flex class="hidden md:flex items-center gap-6" {...others}>
+    <Flex class="items-center gap-6" {...others}>
       {local.children}
     </Flex>
   )

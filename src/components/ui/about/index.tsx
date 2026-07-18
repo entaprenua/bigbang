@@ -1,6 +1,5 @@
 import { splitProps, type JSX, createMemo, createContext, useContext, Show } from "solid-js"
 import { useSettings } from "~/components/ui/settings"
-import type { CoreValueData as CoreValue } from "~/lib/api/settings"
 
 // ─── AboutEntry ───────────────────────────────────────────────
 
@@ -82,17 +81,11 @@ const AboutValuesEntry = (props: AboutValuesEntryProps) => {
   const [local] = splitProps(props, ["name", "defaultValue", "children"])
   const settingsCtx = useSettings()
 
-  const coreValue = createMemo((): CoreValue | undefined => {
-    const values = settingsCtx?.settings()?.about?.values
-    if (!values) return undefined
-    return values.find((v) => v.label === local.name) ?? undefined
-  })
-
   const resolvedValue = createMemo(() => {
-    const cv = coreValue()
-    const desc = cv?.description
-    if (desc !== undefined && desc !== null && desc !== "") return desc
-    return local.defaultValue
+    const values = settingsCtx?.settings()?.about?.values
+    if (!values) return local.defaultValue
+    const desc = values[local.name]
+    return desc ?? local.defaultValue
   })
 
   const hasValue = createMemo(() => {
@@ -102,7 +95,7 @@ const AboutValuesEntry = (props: AboutValuesEntryProps) => {
 
   return (
     <AboutValuesEntryContext.Provider
-      value={{ label: coreValue()?.label ?? local.name, value: resolvedValue }}
+      value={{ label: local.name, value: resolvedValue }}
     >
       <Show when={hasValue()}>{local.children}</Show>
     </AboutValuesEntryContext.Provider>

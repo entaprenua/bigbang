@@ -1,9 +1,9 @@
 import { A } from "@solidjs/router"
 import { Category, CategoryName, CategoryImage, CategorySubcategories } from "~/components/ui/category"
-import { ProductList, } from "~/components/ui/product"
+import { Products, } from "~/components/ui/product"
 import { Grid } from "~/components/ui/grid"
 import { Text } from "~/components/ui/text"
-import { CollectionContent, CollectionView } from "~/components/ui/collection"
+import { CollectionContent, CollectionItems } from "~/components/ui/collection"
 import ProductCard from "~/components/product-card"
 import { Suspense } from "solid-js"
 import { StoreName } from "~/components/store"
@@ -43,26 +43,26 @@ export default function CategoryPage() {
           <CollectionContent>
             <div class="container mx-auto px-4 pb-8">
               <Text variant="h2" class="text-xl font-semibold mb-4">Subcategories</Text>
-              <Grid cols={2} colsSm={2} colsMd={3} colsLg={4}>
-                <CollectionView>
+              <Grid cols={2} colsSm={3} colsMd={4} colsLg={5} colsXl={6}>
+                <CollectionItems>
                   <CategoryCard />
-                </CollectionView>
+                </CollectionItems>
               </Grid>
             </div>
           </CollectionContent>
         </CategorySubcategories>
 
         <div class="container mx-auto px-4 pb-12">
-          <ProductList>
+          <Products>
             <CollectionContent>
               <Text variant="h2" class="text-xl font-semibold mb-4">Products</Text>
-              <Grid cols={2} colsSm={2} colsMd={3} colsLg={4}>
-                <CollectionView>
+              <Grid cols={2} colsSm={3} colsMd={4} colsLg={5} colsXl={6}>
+                <CollectionItems>
                   <ProductCard />
-                </CollectionView>
+                </CollectionItems>
               </Grid>
             </CollectionContent>
-          </ProductList>
+          </Products>
         </div>
       </Category>
     </Suspense>

@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { CATEGORIES_QUERY, CATEGORY_QUERY } from "~/lib/graphql/queries"
 import type { Category } from "../types"
 

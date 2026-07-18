@@ -248,6 +248,7 @@ const SelectErrorMessage = <T extends ValidComponent = "div">(
 }
 
 export type SelectOption = { value: string; label: string }
+export type { SelectProps }
 
 export {
   Select,

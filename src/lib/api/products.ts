@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { PRODUCT_BY_SLUG, PRODUCT_BY_ID, PRODUCTS_QUERY, PRODUCT_FILTER_OPTIONS_QUERY, PRODUCT_SUGGESTIONS_QUERY } from "../graphql/queries"
 import type { Product, ProductConnection } from "../types"
 

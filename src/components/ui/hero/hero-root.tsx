@@ -12,7 +12,6 @@ import type { Hero, HeroItem as HeroItemType } from "~/lib/types"
 export type HeroRootProps = {
   heroId?: string
   storeId?: string | (() => string | null | undefined)
-  data?: Hero
   queryKey?: unknown[]
   enabled?: boolean
   class?: string
@@ -21,7 +20,7 @@ export type HeroRootProps = {
 
 const HeroRoot = (props: HeroRootProps) => {
   const [local, others] = splitProps(props, [
-    "heroId", "storeId", "data", "queryKey", "enabled", "class", "children"
+    "heroId", "storeId", "queryKey", "enabled", "class", "children"
   ])
 
   const queryFn = async () => {
@@ -32,36 +31,41 @@ const HeroRoot = (props: HeroRootProps) => {
     return local.queryKey ?? ["hero", local.heroId]
   })
   return (
-    <Show when={local.data} fallback={
-      <Query
-        queryFn={queryFn}
-        queryKey={queryKey()}
-        enabled={local.enabled ?? true}
-      >
-        <HeroRootContent
-          class={local.class}
-        >{local.children}
-        </HeroRootContent>
-      </Query>
-    }>
-      <Show when={local.data!.items && local.data!.items.length > 0} fallback={null}>
-        <HeroProvider initialHero={local.data!}>
-          <div class={cn("overflow-visible", local.class)} {...others as any}>{local.children}</div>
-        </HeroProvider>
-      </Show>
-    </Show>
+    <Query
+      queryFn={queryFn}
+      queryKey={queryKey()}
+      enabled={local.enabled ?? true}
+    >
+      <HeroRootContent
+        class={local.class}
+      >{local.children}
+      </HeroRootContent>
+    </Query>
   )
 }
 
 const HeroRootContent = (props: { data?: Hero; class?: string; children?: JSX.Element }) => {
   const queryState = useQueryState()
   const data = () => queryState.data as Hero || undefined
+
+  // hero-root.tsx — inside HeroRootContent, after <HeroProvider>
+  const HeroDataSync = () => {
+    const hero = useHero()
+    const data = () => queryState?.data as Hero | undefined
+    createEffect(() => {
+      const d = data()
+      if (!d) return
+      hero.setHero(d)
+      hero.setItems(d.items ?? [])
+    })
+    return null
+  }
+
   return (
-    <Show when={data() && data().items?.length > 0}>
-      <HeroProvider initialHero={data()}>
-        <div class={props.class}>{props.children}</div>
-      </HeroProvider>
-    </Show>
+    <HeroProvider initialHero={data()}>
+      <HeroDataSync />
+      <div class={props.class}>{props.children}</div>
+    </HeroProvider>
   )
 }
 

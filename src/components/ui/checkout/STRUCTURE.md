@@ -2,15 +2,15 @@
 
 ## Overview
 
-Composable, context-driven checkout components for multi-step checkout flows. All option-based components (delivery types, countries) fetch their available values internally from store settings — no manual `options` or `countryCodes` props.
+Composable, context-driven checkout components for multi-step checkout flows. All option-based components (delivery methods, locations) fetch their available values internally from store settings — no manual `options` prop needed.
 
 ## Design Principles
 
 1. **Context-Bound** — All checkout components read from `CheckoutContext` internally; no manual `value`/`onChange` wiring needed
 2. **Self-Contained Fields** — Field atoms embed validation (email regex, phone regex) and default children (`Label` + `Input` + `ErrorMessage`)
 3. **Override Mode** — Pass `children` to replace default markup while keeping context + validation binding
-4. **Settings-Driven** — Delivery methods, countries, and cities are auto-derived from `deliveryZones` query via `CheckoutSettingsProvider`
-5. **Primitive-Agnostic** — Same checkout concept (delivery type, country) available as `Select`, `RadioGroup`, or `SegmentedControl`
+4. **Settings-Driven** — Delivery methods and locations are auto-derived from `deliveryZones` query via `CheckoutSettingsProvider`
+5. **Primitive-Agnostic** — Same checkout concept (delivery method, location) available as `Select`, `RadioGroup`, or `SegmentedControl`
 6. **No Defaults** — Consumer always provides full markup structure (trigger, content, items)
 
 ## Directory Structure
@@ -20,14 +20,13 @@ components/ui/checkout/
 ├── index.ts                      # Barrel exports
 ├── checkout-context.tsx           # CheckoutProvider + useCheckout() + CheckoutFormData
 ├── checkout-steps.tsx            # Step guards: CheckoutContactStep, CheckoutDeliveryStep, CheckoutPaymentStep, CheckoutConfirmationStep
-├── checkout-settings.tsx         # CheckoutSettingsProvider — fetches delivery settings from API
-├── checkout-delivery-method.tsx # Delivery method selection: Select, RadioGroup, SegmentedControl
-├── checkout-country.tsx          # Country wrappers: Select, RadioGroup, SegmentedControl
-├── checkout-delivery-city.tsx   # City wrappers: Select, RadioGroup, SegmentedControl
+├── checkout-settings.tsx         # CheckoutSettingsProvider — fetches delivery zones from API
+├── checkout-delivery-method.tsx  # Delivery method selection: Select, RadioGroup, SegmentedControl
+├── checkout-delivery-location.tsx # Delivery location selection: Select, RadioGroup, SegmentedControl
 ├── contact-fields.tsx            # Self-contained field atoms (email, name, phone, notes, paymentPhone)
 ├── address-fields.tsx            # Address field atoms via createAddressField factory
-├── checkout-delivery-zone.tsx  # Zone resolution + method detail: label, price, conditions, class prices, estimates
-├── checkout-payment-method.tsx  # Payment method selection: SelectButton, RadioGroup, SegmentedControl, wrapper
+├── checkout-delivery-zone.tsx    # Zone resolution + method detail: label, price, conditions, class prices, estimates
+├── checkout-payment-method.tsx   # Payment method selection: SelectButton, RadioGroup, SegmentedControl, wrapper
 ├── checkout-submit-provider.tsx  # MutationProvider wrapper — reads form data from context
 ├── checkout-result.tsx           # Success/error display from mutation state
 └── STRUCTURE.md                  # This file
@@ -38,28 +37,28 @@ components/ui/checkout/
 ```tsx
 <CheckoutSettingsProvider>
   <CheckoutProvider>
-    <CheckoutDeliveryTypeSelect>
+    <CheckoutDeliveryMethodSelect>
       <SelectTrigger>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectListbox />
       </SelectContent>
-    </CheckoutDeliveryTypeSelect>
+    </CheckoutDeliveryMethodSelect>
 
-    <CheckoutCountrySelect>
+    <CheckoutDeliveryLocationSelect>
       <SelectTrigger>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectListbox />
       </SelectContent>
-    </CheckoutCountrySelect>
+    </CheckoutDeliveryLocationSelect>
   </CheckoutProvider>
 </CheckoutSettingsProvider>
 ```
 
-No `options`, no `countryCodes` — everything is fetched internally from store settings.
+No `options` prop — everything is fetched internally from store settings.
 
 ## Data Flow
 
@@ -67,30 +66,28 @@ No `options`, no `countryCodes` — everything is fetched internally from store 
 CheckoutSettingsProvider
         │
         ▼
-getConfig { mpesa_enabled, stripe_enabled }
-deliveryZones { locations, methods, classPrices }
+deliveryZones { locations (JSON string), methods (JSON string) }
         │
         ▼
-Settings stored in CheckoutSettingsContext (delivery) + config (payment flags)
+Settings stored in CheckoutSettingsContext.deliveryZones
         │
         ▼
-Payment method wrappers read config flags via getConfig(), gate children per method
-Delivery method options derived from deliveryZones (unique methodId+label pairs)
-Country options derived from deliveryZones.locations (unique countries)
+Delivery method options derived from deliveryZones.methods (parsed JSON object entries)
+Delivery location options derived from deliveryZones.locations (parsed JSON string array)
         │
         ▼
-User selects delivery method → setField('deliveryMethod', methodId)
-User selects delivery country → setField('deliveryCountry', code)
+User selects delivery method (label) → setField('deliveryMethod', label)
+User selects delivery location → setField('deliveryLocation', value)
         │
         ▼
-Zone auto-resolved from deliveryCountry → deliveryZones.find(zone with matching location)
-Delivery zone method details read the matched method by deliveryMethod
+Zone auto-resolved from deliveryLocation → deliveryZones.find(zone with matching location in parsed array)
+Delivery zone method details read the matched method by deliveryMethod label
         │
         ▼
 CheckoutSubmitProvider reads formData and derives metadata from matched zone:
   → paymentMethod → provider
   → deliveryMethod → deliveryMethod (label), plus matched methodId + zoneId
-  → deliveryCountry, deliveryCity
+  → deliveryLocation → deliveryCountry, deliveryCity (maps to backend fields)
   → shippingAddress, billingAddress (AddressInput { street, city, state, zip, country })
   → name, phone, notes
         │
@@ -110,8 +107,7 @@ type CheckoutFormData = {
   name: string
   phone: string
   deliveryMethod: string
-  deliveryCountry: string
-  deliveryCity: string
+  deliveryLocation: string
   billingAddress: Record<string, string>
   shippingAddress: Record<string, string>
   notes: string
@@ -122,7 +118,7 @@ type CheckoutFormData = {
 
 ### CheckoutSettingsProvider
 
-Fetches store settings and delivery zones in parallel via GraphQL.
+Fetches delivery zones via GraphQL.
 
 ```typescript
 type CheckoutSettingsProviderProps = {
@@ -131,12 +127,11 @@ type CheckoutSettingsProviderProps = {
 
 // Available via context:
 type CheckoutSettings = {
-  deliveryZones: DeliveryZone[]  // Full zone tree with locations, methods, classPrices
-  shippingClasses: ShippingClass[]
+  deliveryZones: DeliveryZone[]  // Zones with locations/methods as JSON strings
 }
 ```
 
-Below it, `CheckoutPaymentMethod` gates children by enabled methods, delivery method/country options are derived from `deliveryZones`, and zone method details read `formData.deliveryMethod` from `CheckoutContext`.
+Below it, `CheckoutPaymentMethod` gates children by enabled methods, delivery method/location options are derived from `deliveryZones`, and zone method details read `formData.deliveryMethod` from `CheckoutContext`.
 
 ```tsx
 function useCheckoutSettings(): CheckoutSettingsContextType        // throws if outside provider
@@ -163,7 +158,7 @@ type CheckoutContextType = {
 
 ### Checkout Delivery Method
 
-Three variants — `options` optional. When omitted, derived from `deliveryZones` (unique `methodId` + `label` pairs across all zones). Value stored as `formData.deliveryMethod` (methodId).
+Three variants — `options` optional. When omitted, derived from `deliveryZones.methods` (parsed JSON object — unique label entries across all zones). Value stored as `formData.deliveryMethod` (label).
 
 ```typescript
 // Select (dropdown) — also accepts placeholder, itemComponent
@@ -173,21 +168,9 @@ Three variants — `options` optional. When omitted, derived from `deliveryZones
 
 Options are derived from `CheckoutSettingsContext.deliveryZones` internally when `options` prop is omitted.
 
-### Checkout Country
+### Checkout Delivery Location
 
-Three variants — `countryCodes` optional. When omitted, derived from `deliveryZones.locations` (unique country codes across all zones). Value stored as `formData.deliveryCountry` (country code).
-
-```typescript
-// CheckoutCountrySelect — also accepts placeholder, itemComponent
-// CheckoutCountryRadioGroup — children, class only
-// CheckoutCountrySegmentedControl — children, class only
-```
-
-Countries are filtered from `COUNTRY_OPTIONS` (from `i18n-iso-countries`) against unique country codes derived from `deliveryZones.locations`.
-
-### Checkout Delivery City
-
-Three variants — `options` optional. When omitted, derived from the matched zone's location for the selected country. Value stored as `formData.deliveryCity`.
+Three variants — `options` optional. When omitted, derived from `deliveryZones.locations` (parsed JSON string arrays across all zones). Value stored as `formData.deliveryLocation`.
 
 ```typescript
 // Select (dropdown) — also accepts placeholder, itemComponent
@@ -195,23 +178,22 @@ Three variants — `options` optional. When omitted, derived from the matched zo
 // SegmentedControl (segmented buttons) — children, class only
 ```
 
-Cities come from `matchedZone.locations[selectedCountry].cities`.
+Locations are unique string values parsed from each zone's `locations` JSON column.
 
 ### Checkout Delivery Zone
 
-Once a country is selected, the matching zone is auto-resolved. `CheckoutDeliveryZoneMethod` reads `formData.deliveryMethod` from `CheckoutContext` — no `methodId` prop needed. All child components read the same matched method.
+Once a location is selected, the matching zone is auto-resolved. `CheckoutDeliveryZoneMethod` reads `formData.deliveryMethod` from `CheckoutContext` — no `methodId` prop needed. All child components read the same matched method.
 
 | Component | Role | Data source |
 |-----------|------|-------------|
-| `CheckoutDeliveryZoneProvider` | Placeholder wrapper | — |
 | `CheckoutDeliveryZoneName` | Zone name | Matched zone |
 | `CheckoutDeliveryZoneMethod` | Context wrapper — gates children by method existence | Matched zone method by `formData.deliveryMethod` |
 | `CheckoutDeliveryZoneMethodLabel` | Method display label | `method.label` |
-| `CheckoutDeliveryZoneMethodPrice` | Method base price | `method.basePrice` |
+| `CheckoutDeliveryZoneMethodPrice` | Method base price | `method.price` |
 | `CheckoutDeliveryZoneMethodMinDays` / `MaxDays` | Est. delivery time (renders only if set) | `method.estMinDays` / `estMaxDays` |
-| `CheckoutDeliveryZoneMethodConditions` | Auto-iterates parsed JSON conditions | `method.conditions` (JSONB string) |
+| `CheckoutDeliveryZoneMethodConditions` | Auto-iterates parsed JSON conditions | `method.conditions` (JSON string) |
 | `CheckoutDeliveryZoneMethodConditionLabel` / `Value` | Per-condition field label + value | Parent `Conditions` context |
-| `CheckoutDeliveryZoneMethodClassPrices` | Auto-iterates class-specific prices | `method.classPrices` |
+| `CheckoutDeliveryZoneMethodClassPrices` | Auto-iterates class-specific prices from object | `method.classPrices` (JSON object) |
 | `CheckoutDeliveryZoneMethodClassPriceLabel` / `Value` | Per-class shipping name + price | Parent `ClassPrices` context |
 
 **Usage:**
@@ -378,11 +360,11 @@ type CheckoutSubmitProviderProps = {
 ```
 
 Wraps `MutationProvider`, reads `formData` from `CheckoutContext` and `deliveryZones` from `CheckoutSettingsContext`. Internally infers:
-- `cartId` from `CartContext` (cart checkout path)
 - `lineItems` from URL params `?productId=xxx&variantId=xxx` (Buy Now path)
 - `provider` from `formData.paymentMethod`
 - `deliveryMethod` (label), `deliveryMethodId` + `deliveryZoneId` derived from matched zone
-- `deliveryCountry`, `deliveryCity`, `shippingAddress`, `billingAddress`
+- `deliveryLocation` → `deliveryCountry` / `deliveryCity` (maps to backend fields)
+- `shippingAddress`, `billingAddress`
 - `name`, `phone`, `notes`
 - `paymentPhone`, `customerEmail`
 
@@ -427,23 +409,14 @@ function CheckoutPage() {
               </SegmentedControlItems>
             </CheckoutDeliveryMethodSegmentedControl>
 
-            <CheckoutCountrySelect>
+            <CheckoutDeliveryLocationSelect>
               <SelectTrigger>
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectListbox />
               </SelectContent>
-            </CheckoutCountrySelect>
-
-            <CheckoutDeliveryCitySelect>
-              <SelectTrigger>
-                <SelectValue placeholder="Select city" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectListbox />
-              </SelectContent>
-            </CheckoutDeliveryCitySelect>
+            </CheckoutDeliveryLocationSelect>
 
             <CheckoutDeliveryZoneMethod>
               <CheckoutDeliveryZoneMethodLabel />
@@ -577,60 +550,32 @@ already known from the accordion state. Two approaches:
 </CheckoutDeliveryMethodSegmentedControl>
 ```
 
-### Country Variants
+### Delivery Location Variants
 
 ```tsx
 // Select
-<CheckoutCountrySelect>
+<CheckoutDeliveryLocationSelect>
   <SelectTrigger><SelectValue /></SelectTrigger>
   <SelectContent><SelectListbox /></SelectContent>
-</CheckoutCountrySelect>
+</CheckoutDeliveryLocationSelect>
 
 // RadioGroup
-<CheckoutCountryRadioGroup>
+<CheckoutDeliveryLocationRadioGroup>
   <RadioGroupItems>
     <RadioGroupItem>
       <RadioGroupItemLabel />
     </RadioGroupItem>
   </RadioGroupItems>
-</CheckoutCountryRadioGroup>
+</CheckoutDeliveryLocationRadioGroup>
 
 // SegmentedControl
-<CheckoutCountrySegmentedControl>
+<CheckoutDeliveryLocationSegmentedControl>
   <SegmentedControlItems>
     <SegmentedControlItem>
       <SegmentedControlItemLabel />
     </SegmentedControlItem>
   </SegmentedControlItems>
-</CheckoutCountrySegmentedControl>
-```
-
-### City Variants
-
-```tsx
-// Select
-<CheckoutDeliveryCitySelect>
-  <SelectTrigger><SelectValue /></SelectTrigger>
-  <SelectContent><SelectListbox /></SelectContent>
-</CheckoutDeliveryCitySelect>
-
-// RadioGroup
-<CheckoutDeliveryCityRadioGroup>
-  <RadioGroupItems>
-    <RadioGroupItem>
-      <RadioGroupItemLabel />
-    </RadioGroupItem>
-  </RadioGroupItems>
-</CheckoutDeliveryCityRadioGroup>
-
-// SegmentedControl
-<CheckoutDeliveryCitySegmentedControl>
-  <SegmentedControlItems>
-    <SegmentedControlItem>
-      <SegmentedControlItemLabel />
-    </SegmentedControlItem>
-  </SegmentedControlItems>
-</CheckoutDeliveryCitySegmentedControl>
+</CheckoutDeliveryLocationSegmentedControl>
 ```
 
 ### Custom Field Rendering
@@ -652,8 +597,8 @@ function OrderSummary() {
   const { formData } = useCheckout()
   return (
     <div>
-      <p>Delivering to: {formData.deliveryCountry}</p>
-      <p>Via: {formData.deliveryType}</p>
+      <p>Delivering to: {formData.deliveryLocation}</p>
+      <p>Via: {formData.deliveryMethod}</p>
     </div>
   )
 }
@@ -686,12 +631,11 @@ type CheckoutSettingsContextType = {
 }
 
 type CheckoutSettings = {
-  deliveryZones: DeliveryZone[]   // Full zone tree with locations, methods, classPrices
-  shippingClasses: ShippingClass[]
+  deliveryZones: DeliveryZone[]   // Zones with locations/methods as raw JSON strings
 }
 ```
 
-Provided by `CheckoutSettingsProvider`. Fetches delivery zones from the API in parallel. Payment method enablement comes from `getConfig()` in `src/lib/config.ts` (reads `.env` via `server$`).
+Provided by `CheckoutSettingsProvider`. Fetches delivery zones from the API. Payment method enablement comes from `getConfig()` in `src/lib/config.ts` (reads `.env` via `server$`).
 
 ### Step Guards
 
@@ -704,68 +648,18 @@ Provided by `CheckoutSettingsProvider`. Fetches delivery zones from the API in p
 // Steps are optional. Omit them to show all sections at once:
 <CheckoutProvider>
   <CheckoutEmailTextField />
-  <CheckoutDeliveryTypeRadioGroup />
+  <CheckoutDeliveryMethodRadioGroup />
   <CheckoutPaymentMethodRadioGroup />
   <CheckoutSubmitProvider>...</CheckoutSubmitProvider>
 </CheckoutProvider>
 ```
-
-## Settings Schema
-
-Store settings are configured in the admin panel. The delivery schema defines:
-
-```json
-{
-  "type": "delivery",
-  "fields": [
-    {
-      "key": "availableDeliveryTypes",
-      "type": "OBJECT_ARRAY",
-      "children": [
-        { "key": "id", "type": "STRING" },
-        { "key": "label", "type": "STRING" },
-        { "key": "description", "type": "TEXT" },
-        { "key": "price", "type": "NUMBER" }
-      ]
-    },
-    {
-      "key": "availableCountries",
-      "type": "LIST",
-      "itemType": "STRING"
-    }
-  ]
-}
-```
-
-Admin configures which delivery types and countries are available. Storefront fetches them automatically.
-
-## Countries Integration
-
-```typescript
-// src/lib/constants/countries.ts
-import countries from "i18n-iso-countries"
-import en from "i18n-iso-countries/langs/en.json"
-
-countries.registerLocale(en)
-
-export const COUNTRY_OPTIONS = Object.entries(countries.getNames("en"))
-  .map(([value, label]) => ({ value, label }))
-  .sort((a, b) => a.label.localeCompare(b.label))
-
-export function getCountryName(code: string): string {
-  return countries.getName(code, "en") ?? code
-}
-```
-
-Store settings return `availableCountries: string[]` (codes). Checkout country wrappers filter `COUNTRY_OPTIONS` internally.
 
 ## API Alignment
 
 | Endpoint | Component Usage |
 |----------|-----------------|
 | `(getConfig server$ in src/lib/config.ts)` | `CheckoutPaymentMethod` — reads `mpesa_enabled`, `stripe_enabled` flags from `.env` |
-| `storeSettings { delivery { shippingClasses } }` | `CheckoutSettingsProvider` — shipping class names |
-| `deliveryZones { locations, methods { ... }, classPrices { classId price } }` | `CheckoutSettingsProvider` — country list, delivery methods, zone resolution, prices, conditions |
-| `checkout(input: { cartId \| lineItems, provider, deliveryMethod, deliveryMethodId, deliveryZoneId, deliveryCountry, deliveryCity, shippingAddress, billingAddress, name, phone, notes, paymentPhone, customerEmail })` | `CheckoutSubmitProvider` — infers provider, methodId + zoneId from matched zone, builds AddressInput from formData |
+| `deliveryZones { id name position locations methods }` | `CheckoutSettingsProvider` — location list, delivery methods, zone resolution, prices, conditions |
+| `checkout(input: { ..., deliveryMethod, deliveryMethodId, deliveryZoneId, deliveryCountry, deliveryCity, ... })` | `CheckoutSubmitProvider` — infers provider, methodId + zoneId from matched zone, maps `deliveryLocation` to `deliveryCountry`/`deliveryCity`, builds AddressInput from formData |
 
 No `options`, no `provider`, no `cartId`, no `methodId` props. Components read internally from `CheckoutContext` + `CheckoutSettingsContext` + `CartContext` + URL params + `getConfig()` for payment enablement.

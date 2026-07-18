@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { WISHLIST_QUERY, ADD_TO_WISHLIST_MUTATION, REMOVE_FROM_WISHLIST_MUTATION } from "~/lib/graphql/queries"
 import type { Wishlist } from "../types"
 

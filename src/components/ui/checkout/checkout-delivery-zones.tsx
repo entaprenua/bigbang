@@ -2,116 +2,110 @@ import { createContext, useContext, createMemo, For, splitProps, type JSX } from
 import { cn } from '~/lib/utils'
 import { useCheckout } from './checkout-context'
 import { useCheckoutSettingsOptional } from './checkout-settings'
+import { Collection, useCollectionItem } from '../collection'
 
-export function useMatchedZone() {
-  const settingsCtx = useCheckoutSettingsOptional()
-  const { formData } = useCheckout()
-  return createMemo(() => {
-    const country = formData.deliveryCountry
-    const zones = settingsCtx?.settings().deliveryZones
-    if (!country || !zones || zones.length === 0) return null
-    return zones.find((z) =>
-      z.locations.some((l) => l.country === country)
-    ) ?? null
-  })
+function parseMethods(raw: string | null | undefined): Record<string, {
+  label: string
+  price: number
+  conditions?: string
+  classPrices?: Record<string, number>
+  estMinDays?: number
+  estMaxDays?: number
+}> {
+  try { return JSON.parse(raw ?? '{}') } catch { return {} }
+}
+
+function parseLocations(raw: string | null | undefined): string[] {
+  try { return JSON.parse(raw ?? '[]') } catch { return [] }
+}
+
+function useMatchedZone() {
+  const collectionItem = useCollectionItem()
+  return createMemo(() => collectionItem?.item ?? null)
 }
 
 function useMatchedMethod() {
   const zone = useMatchedZone()
   const { formData } = useCheckout()
   return createMemo(() => {
-    const methodId = formData.deliveryMethod
-    if (!methodId) return null
-    return zone()?.methods.find((m) => m.methodId === methodId) ?? null
+    const name = formData.deliveryMethod
+    if (!name) return null
+    const methods = parseMethods(zone()?.methods)
+    return methods[name] ?? null
   })
 }
 
-// ─── CheckoutDeliveryZoneProvider ────────────────────────────────
+// ─── CheckoutDeliveryZones ──────────────────────────────────────────
 
-function CheckoutDeliveryZoneProvider(props: { children?: JSX.Element }) {
-  return <>{props.children}</>
-}
-
-// ─── CheckoutDeliveryZoneName ────────────────────────────────────
-
-type CheckoutDeliveryZoneNameProps = {
-  class?: string
+type CheckoutDeliveryZonesProps = {
   children?: JSX.Element
 }
 
+function CheckoutDeliveryZones(props: CheckoutDeliveryZonesProps) {
+  const settingsCtx = useCheckoutSettingsOptional()
+  const zones = createMemo(() => settingsCtx?.settings().deliveryZones ?? [])
+  return (
+    <Collection data={zones()}>
+      {props.children}
+    </Collection>
+  )
+}
+
+// ─── CheckoutDeliveryZoneName ────────────────────────────────────────
+
+type CheckoutDeliveryZoneNameProps = { class?: string; children?: JSX.Element }
+
 function CheckoutDeliveryZoneName(props: CheckoutDeliveryZoneNameProps) {
   const [local] = splitProps(props, ['class', 'children'])
-  const zone = useMatchedZone()
+  const collectionItem = useCollectionItem()
   return (
     <span class={cn(local.class)}>
-      {local.children ?? zone()?.name}
+      {local.children ?? collectionItem?.item?.name}
     </span>
   )
 }
 
-// ─── CheckoutDeliveryZoneMethod ──────────────────────────────────
+// ─── CheckoutDeliveryZoneMethod ──────────────────────────────────────
 
-type CheckoutDeliveryZoneMethodProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethod(props: CheckoutDeliveryZoneMethodProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const method = useMatchedMethod()
-
-  return method() ? (
-    <div class={cn(local.class)}>
-      {local.children}
-    </div>
-  ) : null
+  return method() ? <div class={cn(local.class)}>{local.children}</div> : null
 }
 
-// ─── CheckoutDeliveryZoneMethodLabel ─────────────────────────────
+// ─── CheckoutDeliveryZoneMethodLabel ─────────────────────────────────
 
-type CheckoutDeliveryZoneMethodLabelProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodLabelProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodLabel(props: CheckoutDeliveryZoneMethodLabelProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const method = useMatchedMethod()
-  return (
-    <span class={local.class}>
-      {local.children ?? method()?.label}
-    </span>
-  )
+  return <span class={local.class}>{local.children ?? method()?.label}</span>
 }
 
-// ─── CheckoutDeliveryZoneMethodPrice ─────────────────────────────
+// ─── CheckoutDeliveryZoneMethodPrice ─────────────────────────────────
 
-type CheckoutDeliveryZoneMethodPriceProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodPriceProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodPrice(props: CheckoutDeliveryZoneMethodPriceProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const method = useMatchedMethod()
   return (
     <span class={cn('text-lg font-bold', local.class)}>
-      {local.children ?? method()?.basePrice}
+      {local.children ?? method()?.price}
     </span>
   )
 }
 
-// ─── CheckoutDeliveryZoneMethodMinDays ──────────────────────────
+// ─── CheckoutDeliveryZoneMethodMinDays ───────────────────────────────
 
-type CheckoutDeliveryZoneMethodMinDaysProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodMinDaysProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodMinDays(props: CheckoutDeliveryZoneMethodMinDaysProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const method = useMatchedMethod()
-
   return method() && method()!.estMinDays != null ? (
     <span class={cn('text-sm text-muted-foreground', local.class)}>
       {local.children ?? `${method()!.estMinDays} day(s)`}
@@ -119,17 +113,13 @@ function CheckoutDeliveryZoneMethodMinDays(props: CheckoutDeliveryZoneMethodMinD
   ) : null
 }
 
-// ─── CheckoutDeliveryZoneMethodMaxDays ──────────────────────────
+// ─── CheckoutDeliveryZoneMethodMaxDays ───────────────────────────────
 
-type CheckoutDeliveryZoneMethodMaxDaysProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodMaxDaysProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodMaxDays(props: CheckoutDeliveryZoneMethodMaxDaysProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const method = useMatchedMethod()
-
   return method() && method()!.estMaxDays != null ? (
     <span class={cn('text-sm text-muted-foreground', local.class)}>
       {local.children ?? `${method()!.estMaxDays} day(s)`}
@@ -137,7 +127,7 @@ function CheckoutDeliveryZoneMethodMaxDays(props: CheckoutDeliveryZoneMethodMaxD
   ) : null
 }
 
-// ─── MethodConditionContext ──────────────────────────────────────
+// ─── Conditions ──────────────────────────────────────────────────
 
 type MethodConditionEntry = { field: string; value: string }
 
@@ -149,12 +139,7 @@ function useMethodCondition(): MethodConditionEntry {
   return ctx
 }
 
-// ─── CheckoutDeliveryZoneMethodConditions ────────────────────────
-
-type CheckoutDeliveryZoneMethodConditionsProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodConditionsProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodConditions(props: CheckoutDeliveryZoneMethodConditionsProps) {
   const [local] = splitProps(props, ['class', 'children'])
@@ -184,17 +169,11 @@ function CheckoutDeliveryZoneMethodConditions(props: CheckoutDeliveryZoneMethodC
   )
 }
 
-// ─── CheckoutDeliveryZoneMethodConditionLabel ────────────────────
-
-type CheckoutDeliveryZoneMethodConditionLabelProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodConditionLabelProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodConditionLabel(props: CheckoutDeliveryZoneMethodConditionLabelProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const { field } = useMethodCondition()
-
   return (
     <span class={cn('text-sm font-medium', local.class)}>
       {local.children ?? formatFieldLabel(field)}
@@ -202,17 +181,11 @@ function CheckoutDeliveryZoneMethodConditionLabel(props: CheckoutDeliveryZoneMet
   )
 }
 
-// ─── CheckoutDeliveryZoneMethodConditionValue ────────────────────
-
-type CheckoutDeliveryZoneMethodConditionValueProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodConditionValueProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodConditionValue(props: CheckoutDeliveryZoneMethodConditionValueProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const { value } = useMethodCondition()
-
   return (
     <span class={cn('text-sm text-muted-foreground', local.class)}>
       {local.children ?? value}
@@ -220,7 +193,7 @@ function CheckoutDeliveryZoneMethodConditionValue(props: CheckoutDeliveryZoneMet
   )
 }
 
-// ─── ClassPriceContext ───────────────────────────────────────────
+// ─── Class Prices ────────────────────────────────────────────────
 
 type ClassPriceEntry = { classId: string; price: number }
 
@@ -232,12 +205,7 @@ function useClassPrice(): ClassPriceEntry {
   return ctx
 }
 
-// ─── CheckoutDeliveryZoneMethodClassPrices ───────────────────────
-
-type CheckoutDeliveryZoneMethodClassPricesProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodClassPricesProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodClassPrices(props: CheckoutDeliveryZoneMethodClassPricesProps) {
   const [local] = splitProps(props, ['class', 'children'])
@@ -245,11 +213,8 @@ function CheckoutDeliveryZoneMethodClassPrices(props: CheckoutDeliveryZoneMethod
 
   const entries = createMemo(() => {
     const prices = method()?.classPrices
-    if (!prices || prices.length === 0) return []
-    return prices.map((cp) => ({
-      classId: cp.classId,
-      price: cp.price,
-    }))
+    if (!prices) return []
+    return Object.entries(prices).map(([classId, price]) => ({ classId, price }))
   })
 
   return (
@@ -263,40 +228,23 @@ function CheckoutDeliveryZoneMethodClassPrices(props: CheckoutDeliveryZoneMethod
   )
 }
 
-// ─── CheckoutDeliveryZoneMethodClassPriceLabel ───────────────────
-
-type CheckoutDeliveryZoneMethodClassPriceLabelProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodClassPriceLabelProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodClassPriceLabel(props: CheckoutDeliveryZoneMethodClassPriceLabelProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const { classId } = useClassPrice()
-  const settingsCtx = useCheckoutSettingsOptional()
-  const name = createMemo(() => {
-    const classes = settingsCtx?.settings().shippingClasses
-    return classes?.find((c) => c.id === classId)?.name ?? classId
-  })
-
   return (
     <span class={cn('text-sm font-medium', local.class)}>
-      {local.children ?? name()}
+      {local.children ?? classId}
     </span>
   )
 }
 
-// ─── CheckoutDeliveryZoneMethodClassPriceValue ───────────────────
-
-type CheckoutDeliveryZoneMethodClassPriceValueProps = {
-  class?: string
-  children?: JSX.Element
-}
+type CheckoutDeliveryZoneMethodClassPriceValueProps = { class?: string; children?: JSX.Element }
 
 function CheckoutDeliveryZoneMethodClassPriceValue(props: CheckoutDeliveryZoneMethodClassPriceValueProps) {
   const [local] = splitProps(props, ['class', 'children'])
   const { price } = useClassPrice()
-
   return (
     <span class={cn('text-sm text-muted-foreground', local.class)}>
       {local.children ?? price}
@@ -321,7 +269,7 @@ function formatConditionValue(value: unknown): string {
 }
 
 export {
-  CheckoutDeliveryZoneProvider,
+  CheckoutDeliveryZones,
   CheckoutDeliveryZoneName,
   CheckoutDeliveryZoneMethod,
   CheckoutDeliveryZoneMethodLabel,
@@ -334,4 +282,6 @@ export {
   CheckoutDeliveryZoneMethodClassPrices,
   CheckoutDeliveryZoneMethodClassPriceLabel,
   CheckoutDeliveryZoneMethodClassPriceValue,
+  parseLocations,
+  parseMethods,
 }

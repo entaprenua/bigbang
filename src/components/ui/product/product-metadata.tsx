@@ -1,5 +1,5 @@
 import { splitProps, type JSX, createMemo, createContext, useContext, Show } from "solid-js"
-import { useProduct } from "./product-context"
+import { useProduct } from "./product-root"
 import { cn } from "~/lib/utils"
 
 function tryParseJson(raw: string): Record<string, string> | undefined {
@@ -38,7 +38,7 @@ const ProductMetadataEntry = (props: ProductMetadataEntryProps) => {
   const product = useProduct()
 
   const value = createMemo(() => {
-    const raw = product?.data?.metadata
+    const raw = product?.metadata
     const metadata: Record<string, string> | undefined =
       typeof raw === "string" ? tryParseJson(raw) : undefined
     return metadata?.[local.name]

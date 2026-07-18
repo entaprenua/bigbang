@@ -1,4 +1,4 @@
-import { apiFetch } from "./client"
+import { apiFetch } from "./server"
 
 export interface AuthMeResponse {
   success: boolean
@@ -21,10 +21,10 @@ export interface RequestOtpResponse {
   data: { success: boolean; email: string; message: string }
 }
 
-export async function requestOtp(email: string): Promise<RequestOtpResponse["data"]> {
+export async function requestOtp(email: string, otp: string): Promise<RequestOtpResponse["data"]> {
   const json = await apiFetch("/auth/request-otp", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, otp }),
   }) as RequestOtpResponse
   return json.data
 }

@@ -7,7 +7,7 @@ import {
   Match,
   ErrorBoundary,
   Suspense,
-  createSignal,
+  createEffect,
   type JSX,
 } from "solid-js"
 import {
@@ -19,6 +19,8 @@ import {
 } from "@tanstack/solid-query"
 import { cn } from "~/lib/utils"
 import { Button } from "../button"
+import { AlertDialog, type AlertDialogProps } from "../alert-dialog"
+import { Dialog, type DialogProps } from "../dialog"
 
 /**
  * TanStack Query v5 with SolidJS SSR Support
@@ -180,19 +182,12 @@ function QueryProvider<TData = unknown, TError = Error>(props: QueryProviderProp
   )
 }
 
-type QueryProps<TData, TError = Error> = QueryProviderProps<TData, TError> & {
-  client?: QueryClientType
-}
+type QueryProps<TData, TError = Error> = QueryProviderProps<TData, TError>
 
 const Query = <TData = unknown, TError = Error>(props: QueryProps<TData, TError>) => {
-  const [local, others] = splitProps(props, ["client", "children"])
-  const client = () => local.client ?? defaultQueryClient
+  const [local, others] = splitProps(props, ["children"])
 
-  return (
-    <QueryClientProvider client={client()}>
-      <QueryProvider {...others}>{local.children}</QueryProvider>
-    </QueryClientProvider>
-  )
+  return <QueryProvider {...others}>{local.children}</QueryProvider>
 }
 
 type QueryLoadingProps = JSX.HTMLAttributes<HTMLDivElement>
@@ -475,6 +470,10 @@ const MutationButton = (props: MutationButtonProps) => {
       class={local.class}
       disabled={m?.isPending}
       onClick={() => (m?.mutate as (args?: unknown) => void)()}
+      data-mutation-idle={m?.isIdle ? "" : undefined}
+      data-mutation-pending={m?.isPending ? "" : undefined}
+      data-mutation-error={m?.isError ? "" : undefined}
+      data-mutation-success={m?.isSuccess ? "" : undefined}
       {...others}
     >
       {local.children ?? "Submit"}
@@ -507,6 +506,50 @@ const MutationError = (props: MutationErrorProps) => {
     <Show when={m && m.isError}>
       <div class={cn("text-destructive", local.class)} {...others}>
         {local.children}
+      </div>
+    </Show>
+  )
+}
+
+type MutationErrorAlertDialogProps = AlertDialogProps & {
+  children?: JSX.Element
+}
+
+const MutationErrorAlertDialog = (props: MutationErrorAlertDialogProps) => {
+  const [local, rest] = splitProps(props, ["children", "open", "onOpenChange"])
+  const m = useMutationState()
+  //createEffect(() => console.error(m.error?.message))
+  return (
+    <AlertDialog open={m?.isError ?? false} onOpenChange={(isOpen) => { if (!isOpen) m?.reset() }} {...rest}>
+      {local.children}
+    </AlertDialog>
+  )
+}
+
+type MutationSuccessDialogProps = DialogProps & {
+  children?: JSX.Element
+}
+
+const MutationSuccessDialog = (props: MutationSuccessDialogProps) => {
+  const [local, rest] = splitProps(props, ["children", "open", "onOpenChange"])
+  const m = useMutationState()
+  return (
+    <Dialog open={m?.isSuccess ?? false} onOpenChange={(isOpen) => { if (!isOpen) m?.reset() }} {...rest}>
+      {local.children}
+    </Dialog>
+  )
+}
+
+type MutationSuccessMessageProps = JSX.HTMLAttributes<HTMLDivElement>
+
+const MutationSuccessMessage = (props: MutationSuccessMessageProps) => {
+  const [local, others] = splitProps(props, ["class", "children"])
+  const m = useMutationState()
+
+  return (
+    <Show when={m && m.isSuccess}>
+      <div class={local.class} {...others}>
+        {local.children ?? (m.data as { message?: string } | undefined)?.message}
       </div>
     </Show>
   )
@@ -572,6 +615,9 @@ export {
   MutationButton,
   MutationLoading,
   MutationError,
+  MutationErrorAlertDialog,
+  MutationSuccessDialog,
+  MutationSuccessMessage,
   MutationErrorMessage,
   useMutationState,
   createOptimisticMutation,

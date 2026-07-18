@@ -1,40 +1,28 @@
-import { splitProps, type JSX } from 'solid-js'
-import { createMemo } from 'solid-js'
+import { splitProps, createMemo, type JSX } from 'solid-js'
 import { Select } from '../select'
 import { RadioGroup } from '../radio-group'
 import { SegmentedControl } from '../segmented-control'
-import { cn } from '~/lib/utils'
 import { useCheckout } from './checkout-context'
-import { useCheckoutSettingsOptional } from './checkout-settings'
+import { useCollectionItem } from '../collection'
+import { parseMethods } from './checkout-delivery-zones'
 
-function useDeliveryMethodOptions(explicit?: string[]) {
-  const settingsCtx = useCheckoutSettingsOptional()
+function useDeliveryMethodOptions() {
+  const collectionItem = useCollectionItem()
   return createMemo(() => {
-    if (explicit) return explicit
-    const zones = settingsCtx?.settings().deliveryZones
-    if (!zones || zones.length === 0) return []
-    const seen = new Set<string>()
-    return zones
-      .flatMap((z) => z.methods)
-      .filter((m) => {
-        if (seen.has(m.methodId)) return false
-        seen.add(m.methodId)
-        return true
-      })
-      .map((m) => m.label)
+    const methods = parseMethods(collectionItem?.item?.methods)
+    return Object.keys(methods)
   })
 }
 
 type CommonDeliveryMethodProps = {
-  options?: string[]
   children?: JSX.Element
   class?: string
 }
 
 function CheckoutDeliveryMethodSelect(props: CommonDeliveryMethodProps & { placeholder?: string; itemComponent?: JSX.Element }) {
-  const [local] = splitProps(props, ['options', 'placeholder', 'itemComponent', 'children', 'class'])
+  const [local] = splitProps(props, ['placeholder', 'itemComponent', 'children', 'class'])
   const { formData, setField } = useCheckout()
-  const options = useDeliveryMethodOptions(local.options)
+  const options = useDeliveryMethodOptions()
 
   return (
     <Select<string>
@@ -51,9 +39,9 @@ function CheckoutDeliveryMethodSelect(props: CommonDeliveryMethodProps & { place
 }
 
 function CheckoutDeliveryMethodRadioGroup(props: CommonDeliveryMethodProps) {
-  const [local] = splitProps(props, ['options', 'children', 'class'])
+  const [local] = splitProps(props, ['children', 'class'])
   const { formData, setField } = useCheckout()
-  const options = useDeliveryMethodOptions(local.options)
+  const options = useDeliveryMethodOptions()
 
   return (
     <RadioGroup
@@ -68,9 +56,9 @@ function CheckoutDeliveryMethodRadioGroup(props: CommonDeliveryMethodProps) {
 }
 
 function CheckoutDeliveryMethodSegmentedControl(props: CommonDeliveryMethodProps) {
-  const [local] = splitProps(props, ['options', 'children', 'class'])
+  const [local] = splitProps(props, ['children', 'class'])
   const { formData, setField } = useCheckout()
-  const options = useDeliveryMethodOptions(local.options)
+  const options = useDeliveryMethodOptions()
 
   return (
     <SegmentedControl

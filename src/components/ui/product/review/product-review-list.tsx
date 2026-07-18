@@ -1,6 +1,6 @@
 import { splitProps, type JSX, createMemo } from "solid-js"
 import { Collection } from "~/components/ui/collection"
-import { useProduct } from "~/components/ui/product/product-context"
+import { useProduct } from "~/components/ui/product/product-root"
 import { reviewsApi } from "~/lib/api/reviews"
 import type { Review, ReviewConnection } from "~/lib/generated/graphql"
 
@@ -27,7 +27,7 @@ const ProductReviewList = (props: ProductReviewListProps) => {
 
   const product = useProduct()
 
-  const productId = () => local.productId ?? product?.data?.id ?? ""
+  const productId = () => local.productId ?? product?.id ?? ""
 
   const page = () => local.page ?? 0
   const size = () => local.size ?? 20

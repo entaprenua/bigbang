@@ -1,4 +1,4 @@
-import { createContext, useContext, type JSX, createMemo, type Accessor } from "solid-js"
+import { createContext, useContext, type JSX, createMemo, createEffect, type Accessor } from "solid-js"
 import { createStore, produce } from "solid-js/store"
 import type { Product } from "~/lib/types"
 import type { RecommendationSource } from "~/lib/api/recommendations"
@@ -67,9 +67,18 @@ export const RecommendationsProvider = (props: RecommendationsProviderProps) => 
     source,
     fallback,
     currentIndex,
-    setProducts: (products) => setState("data", "products", products),
-    setSource: (source) => setState("data", "source", source),
-    setFallback: (fallback) => setState("data", "fallback", fallback),
+    setProducts: (products) => {
+      if (!state.data) { setState("data", { products, source: null, fallback: null }); return }
+      setState("data", "products", products)
+    },
+    setSource: (source) => {
+      if (!state.data) { setState("data", { products: [], source, fallback: null }); return }
+      setState("data", "source", source)
+    },
+    setFallback: (fallback) => {
+      if (!state.data) { setState("data", { products: [], source: null, fallback }); return }
+      setState("data", "fallback", fallback)
+    },
     setCurrentIndex: (index) => setState("currentIndex", Math.max(0, Math.min(index, (state.data?.products.length ?? 1) - 1))),
     next: () => setState("currentIndex", s => s >= (state.data?.products.length ?? 1) - 1 ? 0 : s + 1),
     prev: () => setState("currentIndex", s => s <= 0 ? (state.data?.products.length ?? 1) - 1 : s - 1),

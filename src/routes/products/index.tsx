@@ -1,9 +1,9 @@
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from "~/components/ui/breadcrumb"
-import { ProductList, ProductPaginationProvider, ProductPaginationPrevious, ProductPaginationNext, ProductPaginationTotal } from "~/components/ui/product"
+import { Products, ProductPaginationProvider, ProductPaginationPrevious, ProductPaginationNext, ProductPaginationTotal } from "~/components/ui/product"
 import { Grid } from "~/components/ui/grid"
 import { Flex } from "~/components/ui/flex"
 import { Text } from "~/components/ui/text"
-import { CollectionContent, CollectionView } from "~/components/ui/collection"
+import { CollectionContent, CollectionItems } from "~/components/ui/collection"
 import ProductCard from "~/components/product-card"
 import { Suspense } from "solid-js"
 import { StoreName } from "~/components/store"
@@ -35,16 +35,16 @@ export default function ProductsPage() {
             <Text class="text-stone-500 mt-2">Browse our curated selection</Text>
           </Flex>
 
-          <ProductPaginationProvider initialPageSize={50}>
-            <ProductList>
+          <ProductPaginationProvider initialPageSize={200}>
+            <Products>
               <CollectionContent>
-                <Grid cols={2} colsSm={2} colsMd={3} colsLg={4} class="gap-4">
-                  <CollectionView>
+                <Grid cols={2} colsSm={3} colsMd={4} colsLg={5} colsXl={6} class="gap-4">
+                  <CollectionItems>
                     <ProductCard />
-                  </CollectionView>
+                  </CollectionItems>
                 </Grid>
               </CollectionContent>
-            </ProductList>
+            </Products>
 
             <div class="flex items-center justify-center gap-4 mt-8">
               <ProductPaginationPrevious />

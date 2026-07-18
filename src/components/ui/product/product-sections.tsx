@@ -1,15 +1,16 @@
 import { Show, splitProps, type JSX, createMemo } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
-import { useProduct } from "./product-context"
-import { useProductVariantOptional } from "./product-variant"
+import { useProduct } from "./product-root"
+import { useResolvedProduct } from "./hooks"
+
+export type ProductStockStatus = "in_stock" | "low_stock" | "out_of_stock" | "backorder" | "not_tracked"
 import { useCart } from "../cart/cart-context"
 import { useWishlist } from "../wishlist/wishlist-context"
 import { Button, type ButtonProps } from "../button"
 import { Flex } from "../flex"
 
-import { Select } from "../select"
 import { cn } from "~/lib/utils"
-
+import { MutationProvider } from "../query"
 
 type ImgProps = JSX.ImgHTMLAttributes<HTMLImageElement>
 
@@ -19,16 +20,23 @@ type ProductActionProps = Omit<ButtonProps<"button">, "onClick"> & {
   children?: JSX.Element
 }
 
-const ProductActionWrapper = (props: { children?: JSX.Element; class?: string }) => {
+type ProductActionWrapperProps = {
+  children?: JSX.Element
+  class?: string
+}
+
+const ProductActionWrapper = (props: ProductActionWrapperProps & JSX.HTMLAttributes<HTMLDivElement>) => {
+  const [local, others] = splitProps(props, ["children", "class"])
   return (
     <div
       onClick={(e) => {
         e.stopPropagation()
         e.preventDefault()
       }}
-      class={props.class}
+      class={local.class}
+      {...others}
     >
-      {props.children}
+      {local.children}
     </div>
   )
 }
@@ -36,8 +44,8 @@ const ProductActionWrapper = (props: { children?: JSX.Element; class?: string })
 const ProductName = () => {
   const product = useProduct()
   return (
-    <Show when={product?.data.name}>
-      {product!.data.name}
+    <Show when={product.name}>
+      {product.name}
     </Show>
   )
 }
@@ -45,41 +53,35 @@ const ProductName = () => {
 const ProductDescription = () => {
   const product = useProduct()
   return (
-    <Show when={product?.data.description}>
-      {product!.data.description}
+    <Show when={product.description}>
+      {product.description}
     </Show>
   )
 }
 
 const ProductSku = () => {
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
-  const sku = () => variantCtx?.selectedVariant()?.sku ?? product?.data?.variants?.[0]?.sku
+  const p = useResolvedProduct()
   return (
-    <Show when={sku()}>
-      {sku()}
+    <Show when={p()?.sku}>
+      {p()!.sku}
     </Show>
   )
 }
 
 const ProductPrice = () => {
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
-  const price = () => variantCtx?.selectedVariant()?.price ?? product?.data?.variants?.[0]?.price ?? product?.data?.priceRange?.min
+  const p = useResolvedProduct()
   return (
-    <Show when={price()}>
-      {price()}
+    <Show when={p()?.price}>
+      {p()!.price}
     </Show>
   )
 }
 
 const ProductComparePrice = () => {
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
-  const comparePrice = () => variantCtx?.selectedVariant()?.compareToPrice ?? product?.data?.variants?.[0]?.compareToPrice
+  const p = useResolvedProduct()
   return (
-    <Show when={comparePrice()}>
-      {comparePrice()}
+    <Show when={p()?.compareToPrice}>
+      {p()!.compareToPrice}
     </Show>
   )
 }
@@ -90,13 +92,10 @@ type ProductDiscountProps = {
 
 const ProductDiscount = (props: ProductDiscountProps) => {
   const [local] = splitProps(props, ["percentage"])
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
+  const p = useResolvedProduct()
   const discount = createMemo(() => {
-    const v = variantCtx?.selectedVariant()
-    const fallback = product?.data?.variants?.[0]
-    const price = parseFloat(v?.price ?? fallback?.price ?? "")
-    const compare = parseFloat(v?.compareToPrice ?? fallback?.compareToPrice ?? "")
+    const price = parseFloat(p()?.price ?? "")
+    const compare = parseFloat(p()?.compareToPrice ?? "")
     if (isNaN(price) || isNaN(compare) || compare <= price) return null
     if (local.percentage) {
       return Math.round((1 - price / compare) * 100)
@@ -110,157 +109,89 @@ const ProductDiscount = (props: ProductDiscountProps) => {
   )
 }
 
-const ProductQuantity = () => {
-  const product = useProduct()
-  return (
-    <>{String(product?.data.quantity ?? 1)}</>
-  )
-}
-
 type ProductStatusBadgeProps = {
   children?: JSX.Element
 }
 
 const ProductInStockBadge = (props: ProductStatusBadgeProps) => {
-  const product = useProduct()
+  const p = useResolvedProduct()
   return (
-    <Show when={product?.getStockStatus() === "in_stock"}>
+    <Show when={p()?.stockStatus === "in_stock"}>
       {props.children}
     </Show>
   )
 }
 
 const ProductLowStockBadge = (props: ProductStatusBadgeProps) => {
-  const product = useProduct()
+  const p = useResolvedProduct()
   return (
-    <Show when={product?.getStockStatus() === "low_stock"}>
+    <Show when={p()?.stockStatus === "low_stock"}>
       {props.children}
     </Show>
   )
 }
 
 const ProductOutOfStockBadge = (props: ProductStatusBadgeProps) => {
-  const product = useProduct()
+  const p = useResolvedProduct()
   return (
-    <Show when={product?.getStockStatus() === "out_of_stock"}>
+    <Show when={p()?.stockStatus === "out_of_stock"}>
       {props.children}
     </Show>
   )
 }
 
 const ProductStockCount = () => {
-  const product = useProduct()
-
-  const availableQty = createMemo(() => product?.getAvailableQuantity() ?? -1)
-
+  const p = useResolvedProduct()
   return (
-    <Show when={availableQty() >= 0}>
-      {availableQty()}
+    <Show when={(p()?.stockQuantity ?? -1) >= 0}>
+      {p()!.stockQuantity}
     </Show>
   )
 }
 
 const ProductImage = (props: ImgProps) => {
   const product = useProduct()
-  const variantCtx = useProductVariantOptional()
-  const src = () => variantCtx?.selectedVariant()?.image ?? product?.data?.variants?.[0]?.image ?? product?.data?.media?.find(m => m.type === "image")?.url
+  const p = useResolvedProduct()
+  const src = () => p()?.image
+    ?? product?.media?.find(m => m.type === "image")?.url
   return (
     <Show when={src()}>
-      <img src={src()!} alt={props.alt ?? product!.data.name ?? ""} {...props} />
+      <img src={src()!} alt={props.alt ?? product!.name ?? ""} {...props} />
     </Show>
   )
 }
 
-const ProductAddToCartTrigger = (props: ProductActionProps) => {
-  const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
+const ProductAddToCart = (props: { children?: JSX.Element }) => {
+  const p = useResolvedProduct()
+  const cart = useCart()
 
-  let cart: ReturnType<typeof useCart> | undefined
-  try {
-    cart = useCart()
-  } catch {
-    return (
-      <ProductActionWrapper>
-        <Button variant="ghost" class={cn("p-1", local.class)} disabled>
-          Add to Cart
-        </Button>
-      </ProductActionWrapper>
-    )
-  }
-
-  const handleClick = (e: MouseEvent) => {
-    local.onClick?.(e)
-    if (cart && product?.data) {
-      const v = variantCtx?.selectedVariant()
-      const fallback = product.data.variants?.[0]
-      const price = v?.price ? parseFloat(v.price) : (fallback?.price ? parseFloat(fallback.price) : 0)
-      const variantId = v?.id ?? fallback?.id ?? product.data.id
-      if (variantId) {
-        cart.addItem({
-          productId: variantId,
-          name: product.data.name,
-          price,
-          image: v?.image ?? fallback?.image ?? undefined,
-          quantity: product.data.quantity ?? 1,
-        })
-      }
+  const handleClick = async () => {
+    const resolved = p()
+    if (!resolved?.id) return
+    const existing = cart.find(resolved.id)
+    if (existing) {
+      await cart.updateQuantity({ productId: resolved.id, quantity: existing.quantity + 1 })
+    } else {
+      await cart.addItem({
+        productId: resolved.id,
+        name: resolved.name ?? "",
+        price: parseFloat(resolved.price ?? "0"),
+        image: resolved.image ?? undefined,
+        quantity: 1,
+      })
     }
   }
 
   return (
     <ProductActionWrapper>
-      <Button
-        variant="ghost"
-        class={cn("p-1", local.class)}
-        onClick={handleClick}
-        {...others}
-      >
-        {local.children ?? "Add to Cart"}
-      </Button>
+      <MutationProvider mutationFn={handleClick}>
+        {props.children}
+      </MutationProvider>
     </ProductActionWrapper>
   )
 }
 
-const ProductRemoveFromCartTrigger = (props: ProductActionProps) => {
-  const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
-
-  let cart: ReturnType<typeof useCart> | undefined
-  try {
-    cart = useCart()
-  } catch {
-    return null
-  }
-
-  const handleClick = (e: MouseEvent) => {
-    local.onClick?.(e)
-    if (product?.data && cart) {
-      const v = variantCtx?.selectedVariant()
-      const fallback = product.data.variants?.[0]
-      const variantId = v?.id ?? fallback?.id ?? product.data.id
-      if (variantId) {
-        cart.removeItem(variantId)
-      }
-    }
-  }
-
-  return (
-    <ProductActionWrapper>
-      <Button
-        variant="ghost"
-        class={cn("p-1", local.class)}
-        onClick={handleClick}
-        {...others}
-      >
-        {local.children ?? "Remove"}
-      </Button>
-    </ProductActionWrapper>
-  )
-}
-
-const ProductAddToWishlistTrigger = (props: ProductActionProps) => {
+const ProductAddToWishlist = (props: ProductActionProps) => {
   const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
   const product = useProduct()
 
@@ -279,8 +210,8 @@ const ProductAddToWishlistTrigger = (props: ProductActionProps) => {
 
   const handleClick = (e: MouseEvent) => {
     local.onClick?.(e)
-    if (wishlist && product?.data) {
-      wishlist.addItem(product.data.id)
+    if (wishlist && product) {
+      wishlist.addItem(product.id)
     }
   }
 
@@ -298,7 +229,7 @@ const ProductAddToWishlistTrigger = (props: ProductActionProps) => {
   )
 }
 
-const ProductRemoveFromWishlistTrigger = (props: ProductActionProps) => {
+const ProductRemoveFromWishlist = (props: ProductActionProps) => {
   const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
   const product = useProduct()
 
@@ -311,8 +242,8 @@ const ProductRemoveFromWishlistTrigger = (props: ProductActionProps) => {
 
   const handleClick = (e: MouseEvent) => {
     local.onClick?.(e)
-    if (product?.data?.id && wishlist) {
-      wishlist.removeItem(product.data.id)
+    if (product?.id && wishlist) {
+      wishlist.removeItem(product.id)
     }
   }
 
@@ -330,7 +261,7 @@ const ProductRemoveFromWishlistTrigger = (props: ProductActionProps) => {
   )
 }
 
-const ProductToggleWishlistTrigger = (props: ProductActionProps) => {
+const ProductToggleWishlist = (props: ProductActionProps) => {
   const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
   const product = useProduct()
 
@@ -348,18 +279,18 @@ const ProductToggleWishlistTrigger = (props: ProductActionProps) => {
   }
 
   const isInWishlist = createMemo(() => {
-    if (!product?.data?.id || !wishlist) return false
-    return wishlist.hasProduct(product.data.id)
+    if (!product?.id || !wishlist) return false
+    return wishlist.hasProduct(product.id)
   })
 
   const handleClick = (e: MouseEvent) => {
     local.onClick?.(e)
-    if (!product?.data?.id || !wishlist) return
+    if (!product?.id || !wishlist) return
 
     if (isInWishlist()) {
-      wishlist.removeItem(product.data.id)
+      wishlist.removeItem(product.id)
     } else {
-      wishlist.addItem(product.data.id)
+      wishlist.addItem(product.id)
     }
   }
 
@@ -377,22 +308,18 @@ const ProductToggleWishlistTrigger = (props: ProductActionProps) => {
   )
 }
 
-const ProductOrderTrigger = (props: ProductActionProps) => {
+const ProductOrder = (props: ProductActionProps) => {
   const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
-  const product = useProduct()
-  const variantCtx = useProductVariantOptional()
+  const p = useResolvedProduct()
   const navigate = useNavigate()
 
   const handleClick = (e: MouseEvent) => {
     local.onClick?.(e)
-    if (!product?.data?.id) return
-
-    const v = variantCtx?.selectedVariant()
-    const variantId = v?.id ?? product.data.variants?.[0]?.id
+    const resolved = p()
+    if (!resolved?.id) return
 
     const params = new URLSearchParams()
-    params.set("productId", product.data.id)
-    if (variantId) params.set("variantId", variantId)
+    params.set("productId", resolved.id)
 
     navigate(`${local.href ?? "/checkout"}?${params.toString()}`)
   }
@@ -411,142 +338,21 @@ const ProductOrderTrigger = (props: ProductActionProps) => {
   )
 }
 
-const ProductQuantityDecrementTrigger = (props: ProductActionProps) => {
-  const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
-  const product = useProduct()
-
-  const handleDecrement = (e: MouseEvent) => {
-    local.onClick?.(e)
-    if (!product) return
-    const currentQty = product.data.quantity ?? 1
-    if (currentQty > 1) {
-      product.update({ quantity: currentQty - 1 })
-    }
-  }
-
-  return (
-    <ProductActionWrapper>
-      <Button
-        variant="ghost"
-        class={cn("p-1 w-8", local.class)}
-        onClick={handleDecrement}
-        {...others}
-      >
-        {local.children ?? "−"}
-      </Button>
-    </ProductActionWrapper>
-  )
-}
-
-const ProductQuantityIncrementTrigger = (props: ProductActionProps) => {
-  const [local, others] = splitProps(props, ["class", "href", "onClick", "children"])
-  const product = useProduct()
-
-  const handleIncrement = (e: MouseEvent) => {
-    local.onClick?.(e)
-    if (!product) return
-    const currentQty = product.data.quantity ?? 1
-    product.update({ quantity: currentQty + 1 })
-  }
-
-  return (
-    <ProductActionWrapper>
-      <Button
-        variant="ghost"
-        class={cn("p-1 w-8", local.class)}
-        onClick={handleIncrement}
-        {...others}
-      >
-        {local.children ?? "+"}
-      </Button>
-    </ProductActionWrapper>
-  )
-}
-
-const ProductQuantityInput = (props: { class?: string } & JSX.IntrinsicElements["input"]) => {
-  const [local, others] = splitProps(props, ["class", "value", "onInput", "onClick"])
-  const product = useProduct()
-
-  const handleChange = (e: Event) => {
-    const target = e.currentTarget as HTMLInputElement
-    const value = parseInt(target.value)
-    const qty = isNaN(value) || value < 1 ? 1 : value
-    product?.update({ quantity: qty })
-  }
-
-  return (
-    <ProductActionWrapper>
-      <input
-        type="number"
-        value={product?.data.quantity ?? 1}
-        onInput={handleChange}
-        onClick={(e) => e.stopPropagation()}
-        class={cn("w-16 h-8 text-center border rounded", local.class)}
-        {...others}
-      />
-    </ProductActionWrapper>
-  )
-}
-
-const ProductQuantityActions = (props: { class?: string }) => {
-  return (
-    <Flex
-      flexDirection="row"
-      class={cn(
-        "ring ring-1 ring-primary rounded-lg h-8 items-center",
-        props.class
-      )}
-    >
-      <ProductQuantityDecrementTrigger />
-      <ProductQuantityInput class="flex-1" />
-      <ProductQuantityIncrementTrigger />
-    </Flex>
-  )
-}
-
-type ProductQuantitySelectProps = {
-  options?: string[]
-  class?: string
-  children?: JSX.Element
-}
-
-const ProductQuantitySelect = (props: ProductQuantitySelectProps) => {
-  const [local] = splitProps(props, ['options', 'class', 'children'])
-  const product = useProduct()
-
-  const max = () => product?.getAvailableQuantity() ?? 10
-  const cur = () => product?.data.quantity ?? 1
-
-  const defaultOptions = createMemo(() => {
-    const count = max()
-    const qty = cur()
-    const set = new Set<number>()
-    for (const n of [1, 2, 3, 4, 5, 10, 15, 20, 25, 50]) {
-      if (n <= count) set.add(n)
-    }
-    if (qty <= count && qty >= 1) set.add(qty)
-    if (count >= 1) set.add(count)
-    return [...set].sort((a, b) => a - b).map(String)
-  })
-
-  const options = () => local.options ?? defaultOptions()
-
-  return (
-    <Select<string>
-      options={options()}
-      value={String(cur())}
-      onChange={(v) => product?.update({ quantity: parseInt(v) })}
-      class={local.class}
-    >
-      {local.children}
-    </Select>
-  )
-}
-
 type ProductBackLinkProps = {
   href: string
   class?: string
   children?: JSX.Element
+}
+
+const ProductCartQuantity = () => {
+  const p = useResolvedProduct()
+  const cart = useCart()
+  const quantity = createMemo(() => {
+    const resolved = p()
+    if (!resolved?.id) return 0
+    return cart.find(resolved.id)?.quantity ?? 0
+  })
+  return <>{quantity()}</>
 }
 
 const ProductBackLink = (props: ProductBackLinkProps) => {
@@ -564,28 +370,23 @@ export {
   ProductPrice,
   ProductComparePrice,
   ProductDiscount,
-  ProductQuantity,
   ProductInStockBadge,
   ProductLowStockBadge,
   ProductOutOfStockBadge,
   ProductStockCount,
   ProductImage,
-  ProductAddToCartTrigger,
-  ProductRemoveFromCartTrigger,
-  ProductAddToWishlistTrigger,
-  ProductRemoveFromWishlistTrigger,
-  ProductToggleWishlistTrigger,
-  ProductOrderTrigger,
-  ProductQuantityDecrementTrigger,
-  ProductQuantityIncrementTrigger,
-  ProductQuantityInput,
-  ProductQuantityActions,
-  ProductQuantitySelect,
+  ProductAddToCart,
+  ProductCartQuantity,
+  ProductAddToWishlist,
+  ProductRemoveFromWishlist,
+  ProductToggleWishlist,
+  ProductOrder,
   ProductBackLink,
   ProductActionWrapper,
 }
 
 export type {
   ProductActionProps,
+  ProductActionWrapperProps,
   ProductDiscountProps,
 }

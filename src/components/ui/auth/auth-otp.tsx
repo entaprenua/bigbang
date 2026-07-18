@@ -96,7 +96,10 @@ function AuthOtpRequestProvider(props: AuthOtpRequestProviderProps) {
 
   return (
     <MutationProvider
-      mutationFn={async () => auth.requestOtp(email())}
+      mutationFn={async () => {
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+        return auth.requestOtp(email(), otp)
+      }}
       onSuccess={() => setStep("verify")}
     >
       {props.children}

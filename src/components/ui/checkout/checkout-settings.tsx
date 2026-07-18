@@ -1,7 +1,6 @@
 import { createContext, useContext, createResource, type JSX } from 'solid-js'
-import { settingsApi } from '~/lib/api/settings'
-import { executeGQL } from '~/lib/graphql/client'
-import type { DeliveryZone, ShippingClass } from '~/lib/types'
+import { executeGQL } from '~/lib/graphql/server'
+import type { DeliveryZone } from '~/lib/types'
 
 const DELIVERY_ZONES_QUERY = `
   query DeliveryZones {
@@ -9,15 +8,14 @@ const DELIVERY_ZONES_QUERY = `
       id
       name
       position
-      locations { id country cities }
-      methods { id label methodId basePrice conditions estMinDays estMaxDays classPrices { classId price } }
+      locations
+      methods
     }
   }
 `
 
 type CheckoutSettings = {
   deliveryZones: DeliveryZone[]
-  shippingClasses: ShippingClass[]
 }
 
 type CheckoutSettingsContextType = {
@@ -42,19 +40,12 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 function CheckoutSettingsProvider(props: { children?: JSX.Element }) {
   const [data] = createResource(async () => {
-    const [settings, zonesData] = await Promise.all([
-      settingsApi.get(['delivery']),
-      executeGQL<{ deliveryZones: DeliveryZone[] }>(DELIVERY_ZONES_QUERY),
-    ])
-
-    return {
-      deliveryZones: zonesData.deliveryZones ?? [],
-      shippingClasses: settings.delivery?.shippingClasses ?? [],
-    }
+    const zonesData = await executeGQL<{ deliveryZones: DeliveryZone[] }>(DELIVERY_ZONES_QUERY)
+    return { deliveryZones: zonesData.deliveryZones ?? [] }
   })
 
   const value: CheckoutSettingsContextType = {
-    settings: () => data() ?? { deliveryZones: [], shippingClasses: [] },
+    settings: () => data() ?? { deliveryZones: [] },
     isLoading: () => data.loading,
   }
 

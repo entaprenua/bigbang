@@ -13,4 +13,4 @@ const QueryClient = (props) => {
 
 }
 
-export { QueryClient, useQueryClient }
+export { QueryClient, useQueryClient, queryClient }

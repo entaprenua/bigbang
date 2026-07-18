@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { STORE_QUERY } from "~/lib/graphql/queries"
 import type { Store } from "~/lib/generated/graphql"
 

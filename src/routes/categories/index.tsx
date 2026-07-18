@@ -1,5 +1,5 @@
-import { CollectionContent, CollectionView } from "~/components/ui/collection"
-import { CategoryList, Category, CategoryName, CategoryImage } from "~/components/ui/category"
+import { CollectionContent, CollectionItems } from "~/components/ui/collection"
+import { Categories, Category, CategoryName, CategoryImage } from "~/components/ui/category"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from "~/components/ui/breadcrumb"
 import { Grid } from "~/components/ui/grid"
 import { Flex } from "~/components/ui/flex"
@@ -30,10 +30,10 @@ export default function CategoriesPage() {
           <Text variant="h1" class="text-3xl font-serif font-light">Shop by category</Text>
         </Flex>
 
-        <CategoryList mode="root">
+        <Categories mode="root">
           <CollectionContent>
             <Grid cols={2} colsSm={2} colsMd={3} colsLg={4}>
-              <CollectionView>
+              <CollectionItems>
                 <Category href="categories" class="group">
                   <div class="relative overflow-hidden rounded-lg aspect-[4/5]">
                     <CategoryImage class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -43,10 +43,10 @@ export default function CategoriesPage() {
                     </div>
                   </div>
                 </Category>
-              </CollectionView>
+              </CollectionItems>
             </Grid>
           </CollectionContent>
-        </CategoryList>
+        </Categories>
       </div>
     </div>
   )

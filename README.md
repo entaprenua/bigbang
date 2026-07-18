@@ -6,13 +6,13 @@ npm install
 npm run dev
 ```
 
-Create a `.env` file at the base of the app with these variables:
+##Environment variables
 
 ```env
 # Store API authentication (public template — values exposed intentionally for demo/dev)
-STORE_API_KEY=sk_live_8cmcxvqsbtt5
+STORE_API_KEY=sk_live_i1sofwkct0z3
 PROXY_API_BASE_URL=https://entaprenua.com
-VITE_API_PREFIX=/api/v1
+API_PREFIX=/api/v1
 
 # Email (Resend)
 RESEND_API_KEY=

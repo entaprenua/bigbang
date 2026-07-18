@@ -30,7 +30,7 @@ components/ui/hero/
   <Carousel>
     <CarouselContent>
       <HeroItems>
-        <CollectionView>
+        <CollectionItems>
           <CarouselItem>
             <HeroItem>
               <HeroBackground />
@@ -43,7 +43,7 @@ components/ui/hero/
               </HeroContent>
             </HeroItem>
           </CarouselItem>
-        </CollectionView>
+        </CollectionItems>
       </HeroItems>
     </CarouselContent>
     <CarouselNext />
@@ -154,7 +154,7 @@ type HeroContextValue = {
 
 Provides automatic item detection for hero sections. Checks contexts in priority order:
 
-1. **CollectionItem context** - From CollectionView
+1. **CollectionItem context** - From CollectionItems
 2. **Carousel context** - Uses carousel.selectedIndex()
 3. **Active item** - Default fallback
 
@@ -167,7 +167,7 @@ Provides automatic item detection for hero sections. Checks contexts in priority
   <Carousel>
     <CarouselContent>
       <HeroItems>
-        <CollectionView>
+        <CollectionItems>
           <CarouselItem>
             <HeroItem>
               <HeroBackground />
@@ -182,7 +182,7 @@ Provides automatic item detection for hero sections. Checks contexts in priority
               </HeroContent>
             </HeroItem>
           </CarouselItem>
-        </CollectionView>
+        </CollectionItems>
       </HeroItems>
     </CarouselContent>
     <CarouselNext />
@@ -197,7 +197,7 @@ Provides automatic item detection for hero sections. Checks contexts in priority
 <HeroRoot>
   <HeroItems>
     <Grid cols={2} gap={4}>
-      <CollectionView>
+      <CollectionItems>
         <HeroItem>
           <HeroBackground />
           <HeroContent>
@@ -206,7 +206,7 @@ Provides automatic item detection for hero sections. Checks contexts in priority
             <HeroCtaPrimary />
           </HeroContent>
         </HeroItem>
-      </CollectionView>
+      </CollectionItems>
     </Grid>
   </HeroItems>
 </HeroRoot>

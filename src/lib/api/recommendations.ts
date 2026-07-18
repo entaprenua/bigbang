@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { RECOMMENDATIONS_QUERY, TRACK_PRODUCT_VIEW_MUTATION, ADD_FAVORITE_MUTATION, REMOVE_FAVORITE_MUTATION } from "~/lib/graphql/queries"
 import type { Product } from "~/lib/types"
 
@@ -11,16 +11,9 @@ export type RecommendationType =
   | "recently_viewed"
   | "favorites"
   | "top_rated"
+  | "cart_based"
 
-export type RecommendationSource =
-  | "personalized"
-  | "popular"
-  | "related"
-  | "bought_together"
-  | "newest"
-  | "recently_viewed"
-  | "favorites"
-  | "top_rated"
+export type RecommendationSource = RecommendationType
 
 export type RecommendationResponse = {
   products: Product[]
@@ -28,13 +21,19 @@ export type RecommendationResponse = {
   fallback: RecommendationSource | null
 }
 
+type RecommendationOptions = {
+  productId?: string
+  cartProductIds?: string[]
+}
+
 export const recommendationsApi = {
   get: async (
     type: RecommendationType = "personalized",
     limit: number = 10,
+    options?: RecommendationOptions,
   ): Promise<RecommendationResponse> => {
     const data = await executeGQL<{ recommendations: RecommendationResponse }>(RECOMMENDATIONS_QUERY, {
-      input: { type, limit },
+      input: { type, limit, ...options },
     })
     return data.recommendations
   },

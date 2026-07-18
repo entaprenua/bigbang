@@ -1,8 +1,7 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import {
   CART_QUERY,
-  ADD_TO_CART_MUTATION,
-  UPDATE_CART_ITEM_MUTATION,
+  CART_ITEM_MUTATION,
   REMOVE_CART_ITEM_MUTATION,
   CLEAR_CART_MUTATION,
   CLEAR_SELECTED_CART_ITEMS_MUTATION,
@@ -50,31 +49,24 @@ export const cartsApi = {
   },
 
   addItem: async (input: AddToCartInput): Promise<CartItem> => {
-    await executeGQL(ADD_TO_CART_MUTATION, {
-      input: { variantId: input.productId, quantity: input.quantity ?? 1 },
-    })
-    const cart = await refetchCart()
-    const item = cart.items.find(i => i.productId === input.productId)
-    if (!item) throw new Error("Item not found after add")
-    return item
+    const vars: Record<string, unknown> = { productId: input.productId, quantity: input.quantity ?? 1, selected: input.selected ?? true }
+    const data = await executeGQL<{ cartItem: CartItem }>(CART_ITEM_MUTATION, vars)
+    return data.cartItem
   },
 
   updateItem: async (
-    variantId: string,
+    itemId: string,
     input: UpdateCartItemInput,
   ): Promise<CartItem> => {
-    const vars: Record<string, unknown> = { variantId }
+    const vars: Record<string, unknown> = { itemId }
     if (input.quantity !== undefined) vars.quantity = input.quantity
     if (input.selected !== undefined) vars.selected = input.selected
-    await executeGQL(UPDATE_CART_ITEM_MUTATION, vars)
-    const cart = await refetchCart()
-    const item = cart.items.find(i => i.productId === variantId)
-    if (!item) throw new Error("Item not found after update")
-    return item
+    const data = await executeGQL<{ cartItem: CartItem }>(CART_ITEM_MUTATION, vars)
+    return data.cartItem
   },
 
-  removeItem: async (variantId: string): Promise<void> => {
-    await executeGQL(REMOVE_CART_ITEM_MUTATION, { variantId })
+  removeItem: async (itemId: string): Promise<void> => {
+    await executeGQL(REMOVE_CART_ITEM_MUTATION, { itemId })
   },
 
   clearSelectedItems: async (): Promise<{ deleted: number }> => {

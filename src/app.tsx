@@ -11,7 +11,6 @@ import { Text } from "~/components/ui/text"
 import AlertTriangleIcon from "lucide-solid/icons/alert-triangle"
 import { ErrorBoundary, ErrorBoundaryMessage, ErrorBoundaryResetButton } from "~/components/ui/error-boundary"
 import { ColorMode } from "~/components/ui/color-mode"
-import { OrderProvider } from "~/components/ui/order"
 import { CartProvider } from "~/components/ui/cart"
 import "./app.css";
 

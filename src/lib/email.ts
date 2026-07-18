@@ -2,10 +2,18 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const defaultFrom = process.env.EMAIL_FROM || "noreply@entaprenua.com";
 const defaultFromName = process.env.EMAIL_FROM_NAME || "Store Team";
+
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY not configured");
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
 
 export async function sendEmail(opts: {
   to: string | string[];
@@ -35,7 +43,7 @@ export async function sendEmail(opts: {
   const senderName = opts.fromName || defaultFromName;
   const from = senderName ? `${senderName} <${senderEmail}>` : senderEmail;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from,
     to: Array.isArray(opts.to) ? opts.to : [opts.to],
     subject: opts.subject,

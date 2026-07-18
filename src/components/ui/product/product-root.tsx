@@ -1,12 +1,29 @@
-import { Show, splitProps, createEffect, useContext, type JSX, createMemo } from "solid-js"
+import { Show, splitProps, createEffect, useContext, createContext, type JSX, createMemo } from "solid-js"
 import { cn } from "~/lib/utils"
 import { A, useParams } from "@solidjs/router"
-import { ProductProvider, useProduct, type ProductContextData } from "./product-context"
 import { Query, useQueryState } from "../query"
 import { productsApi } from "~/lib/api/products"
 import { useCollectionItem } from "../collection"
 import { SearchItemContext } from "../search"
+import { useIsInCart, useIsInWishlist } from "./hooks"
 import type { Product } from "~/lib/types"
+
+const ProductContext = createContext<Partial<Product> | null>(undefined)
+
+export const useProduct = (): Partial<Product> | null => useContext(ProductContext)
+
+type ProductProviderProps = {
+  data?: Partial<Product>
+  children?: JSX.Element
+}
+
+export const ProductProvider = (props: ProductProviderProps) => {
+  return (
+    <ProductContext.Provider value={props.data ?? null}>
+      {props.children}
+    </ProductContext.Provider>
+  )
+}
 
 type ProductRootProps = {
   storeId?: string
@@ -39,9 +56,13 @@ const ProductRoot = (props: ProductRootProps) => {
     hasCollectionItem() || hasSearchItem() || hasExplicitFetch()
 
   const resolvedData = createMemo(() => {
-    if (collectionItem?.item) return collectionItem.item as ProductContextData
+    const item = collectionItem?.item
+    if (item) {
+      /* For eg when in cartItem */
+      return { ...item, id: item.productId ?? item.id, parentId: null } as Partial<Product>
+    }
     const searchItemRawValue = (searchItemCtx?.item as { rawValue?: unknown })?.rawValue
-    if (searchItemRawValue) return searchItemRawValue as ProductContextData
+    if (searchItemRawValue) return searchItemRawValue as Partial<Product>
     return undefined
   })
 
@@ -82,11 +103,11 @@ const ProductWrapper = (
 ) => {
   const product = useProduct()
 
-  const isInCart = () => product?.isInCart()
-  const isInWishlist = () => product?.isInWishlist()
+  const isInCart = useIsInCart()
+  const isInWishlist = useIsInWishlist()
 
   const resolvedHref = () => {
-    const productSlug = product?.data?.slug
+    const productSlug = product?.slug
     if (!props.href || !productSlug) return undefined
     let base = props.href
     if (base.endsWith("/")) {
@@ -169,7 +190,7 @@ const ProductRootContent = (props: { href?: string; class?: string; children?: J
       when={productData()}
       fallback={null}
     >
-      <ProductProvider data={productData() as ProductContextData}>
+      <ProductProvider data={productData() as Partial<Product>}>
         <ProductWrapper href={local.href} class={local.class}>
           {local.children}
         </ProductWrapper>

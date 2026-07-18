@@ -20,7 +20,7 @@ components/ui/product/review/
 ```
 ProductReviewList (Collection + queryFn → reviewsApi.getByProduct)
 ├── CollectionContent (renders when reviews exist)
-│   └── CollectionView (iterates reviews)
+│   └── CollectionItems (iterates reviews)
 │       └── ProductReviewListItem (useCollectionItem → review context)
 │           ├── ProductReviewListItemStars (RatingGroup, readOnly, auto-reads from collection)
 │           ├── ProductReviewListItemAuthor
@@ -28,7 +28,7 @@ ProductReviewList (Collection + queryFn → reviewsApi.getByProduct)
 │           ├── ProductReviewListItemComment
 │           └── ProductReviewListItemMedia (nested Collection with review.media)
 │               ├── CollectionContent
-│               │   └── CollectionView
+│               │   └── CollectionItems
 │               │       └── ProductReviewListItemMediaItem (MediaItem re-export)
 │               └── CollectionEmpty
 └── CollectionEmpty (renders when no reviews)
@@ -44,12 +44,12 @@ ProductReviewList (Collection + queryFn → reviewsApi.getByProduct)
 
 ```tsx
 // productId is auto-inferred from Product context
-import { CollectionView, CollectionContent, CollectionEmpty } from "../../collection"
+import { CollectionItems, CollectionContent, CollectionEmpty } from "../../collection"
 
 <Product>
   <ProductReviewList>
     <CollectionContent>
-      <CollectionView class="space-y-4">
+      <CollectionItems class="space-y-4">
         <ProductReviewListItem>
           <div class="flex items-center gap-2">
             <ProductReviewListItemStars />
@@ -58,7 +58,7 @@ import { CollectionView, CollectionContent, CollectionEmpty } from "../../collec
           <ProductReviewListItemDate />
           <ProductReviewListItemComment />
         </ProductReviewListItem>
-      </CollectionView>
+      </CollectionItems>
     </CollectionContent>
   </ProductReviewList>
 </Product>
@@ -67,11 +67,11 @@ import { CollectionView, CollectionContent, CollectionEmpty } from "../../collec
 ### Standalone (explicit productId)
 
 ```tsx
-import { CollectionView, CollectionContent } from "../../collection"
+import { CollectionItems, CollectionContent } from "../../collection"
 
 <ProductReviewList productId={productId}>
   <CollectionContent>
-    <CollectionView class="space-y-4">
+    <CollectionItems class="space-y-4">
       <ProductReviewListItem>
         <div class="flex items-center gap-2">
           <ProductReviewListItemStars />
@@ -80,7 +80,7 @@ import { CollectionView, CollectionContent } from "../../collection"
         <ProductReviewListItemDate />
         <ProductReviewListItemComment />
       </ProductReviewListItem>
-    </CollectionView>
+    </CollectionItems>
   </CollectionContent>
 </ProductReviewList>
 ```
@@ -100,12 +100,12 @@ import { CollectionEmpty } from "../../collection"
 ### With Review Media
 
 ```tsx
-import { CollectionView, CollectionContent, CollectionEmpty } from "../../collection"
+import { CollectionItems, CollectionContent, CollectionEmpty } from "../../collection"
 import { ProductReviewListItemMedia, ProductReviewListItemMediaItem } from "~/components/ui/product"
 
 <ProductReviewList productId={productId}>
   <CollectionContent>
-    <CollectionView class="space-y-6">
+    <CollectionItems class="space-y-6">
       <ProductReviewListItem>
         <div class="flex items-center gap-2">
           <ProductReviewListItemStars />
@@ -116,13 +116,13 @@ import { ProductReviewListItemMedia, ProductReviewListItemMediaItem } from "~/co
         <ProductReviewListItemComment />
         <ProductReviewListItemMedia>
           <CollectionContent>
-            <CollectionView class="flex gap-2">
+            <CollectionItems class="flex gap-2">
               <ProductReviewListItemMediaItem class="size-24 rounded-md object-cover" />
-            </CollectionView>
+            </CollectionItems>
           </CollectionContent>
         </ProductReviewListItemMedia>
       </ProductReviewListItem>
-    </CollectionView>
+    </CollectionItems>
   </CollectionContent>
 </ProductReviewList>
 ```
@@ -224,7 +224,7 @@ const item = useCollectionItem()
 const review = () => item?.item as Review | undefined
 ```
 
-This works because `CollectionView` wraps each item in `CollectionItem` context. The `Review` shape:
+This works because `CollectionItems` wraps each item in `CollectionItem` context. The `Review` shape:
 
 ```typescript
 type Review = {

@@ -1,7 +1,7 @@
 import { splitProps, type JSX, createMemo } from "solid-js"
 import { Collection } from "../collection"
-import { useProduct } from "./product-context"
-import { useProductVariantOptional } from "./product-variant"
+import { useProduct } from "./product-root"
+import { useProductVariantOptional } from "./product-variants"
 import { MediaItem, detectMediaType, type MediaItemType, type MediaItemProps } from "../media"
 import type { ProductMedia as ProductMediaType } from "~/lib/types"
 
@@ -17,7 +17,7 @@ const ProductMedia = (props: ProductMediaProps) => {
 
   const mediaItems = createMemo(() => {
     const variantMedia = variantCtx?.selectedVariant()?.media as ProductMediaType[] | undefined
-    return variantMedia ?? (product?.data?.media as ProductMediaType[] | undefined)
+    return variantMedia ?? (product?.media as ProductMediaType[] | undefined)
   })
 
   return (

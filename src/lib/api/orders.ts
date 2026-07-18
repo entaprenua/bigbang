@@ -1,4 +1,4 @@
-import { executeGQL } from "~/lib/graphql/client"
+import { executeGQL } from "~/lib/graphql/server"
 import { ORDER_QUERY, ORDER_LOOKUP_QUERY } from "~/lib/graphql/queries"
 import type { Order } from "../types"
 

@@ -6,8 +6,8 @@ type CheckoutFormData = {
   name: string
   phone: string
   deliveryMethod: string
-  deliveryCountry: string
-  deliveryCity: string
+  deliveryLocation: string
+  deliveryZone: string
   billingAddress: Record<string, string>
   shippingAddress: Record<string, string>
   notes: string
@@ -33,8 +33,8 @@ const defaultFormData: CheckoutFormData = {
   name: '',
   phone: '',
   deliveryMethod: '',
-  deliveryCountry: '',
-  deliveryCity: '',
+  deliveryLocation: '',
+  deliveryZone: '',
   billingAddress: {},
   shippingAddress: {},
   notes: '',

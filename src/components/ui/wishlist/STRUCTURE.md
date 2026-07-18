@@ -94,11 +94,11 @@ WishlistRoot (auto-fetches wishlist)
 └── WishlistProvider (context)
     └── WishlistItems (Collection)
         └── Grid/Flex/Carousel (user's layout)
-            └── CollectionView
+            └── CollectionItems
                 └── Product (auto-detects from context)
                     ├── ProductImage
                     ├── ProductName
-                    └── ProductRemoveFromWishlistTrigger
+                    └── ProductRemoveFromWishlist
     └── CollectionEmpty (shown when empty)
 ```
 
@@ -109,16 +109,16 @@ WishlistRoot (auto-fetches wishlist)
 <WishlistRoot>
   <WishlistItems>
     <Grid cols={4} gap={4}>
-      <CollectionView>
+      <CollectionItems>
         {(item) => (
           <Product item={item}>
             <ProductImage class="rounded-lg aspect-square object-cover" />
             <ProductName />
             <ProductPrice />
-            <ProductRemoveFromWishlistTrigger />
+            <ProductRemoveFromWishlist />
           </Product>
         )}
-      </CollectionView>
+      </CollectionItems>
     </Grid>
   </WishlistItems>
 </WishlistRoot>
@@ -127,14 +127,14 @@ WishlistRoot (auto-fetches wishlist)
 <WishlistRoot>
   <WishlistItems>
     <Flex gap={4}>
-      <CollectionView>
+      <CollectionItems>
         {(item) => (
           <Product item={item}>
             <ProductImage />
             <ProductName />
           </Product>
         )}
-      </CollectionView>
+      </CollectionItems>
     </Flex>
   </WishlistItems>
 </WishlistRoot>
@@ -148,12 +148,12 @@ When the wishlist is empty, use `CollectionEmpty` to show a message:
 <WishlistRoot>
   <WishlistItems>
     <Grid cols={4} gap={4}>
-      <CollectionView>
+      <CollectionItems>
         <Product>
           <ProductImage />
           <ProductName />
         </Product>
-      </CollectionView>
+      </CollectionItems>
     </Grid>
     <CollectionEmpty />
   </WishlistItems>
@@ -209,16 +209,16 @@ Wishlist uses existing `Product` components for displaying each product. The Pro
   <ProductImage />
   <ProductName />
   <ProductPrice />
-  <ProductAddToWishlistTrigger />     // Add to wishlist
-  <ProductRemoveFromWishlistTrigger /> // Remove from wishlist
-  <ProductToggleWishlistTrigger />      // Toggle (smart button)
+  <ProductAddToWishlist />     // Add to wishlist
+  <ProductRemoveFromWishlist /> // Remove from wishlist
+  <ProductToggleWishlist />      // Toggle (smart button)
 </Product>
 ```
 
 ### How It Works
 
 1. `WishlistProvider` wraps the content and provides `useWishlist()`
-2. `ProductRemoveFromWishlistTrigger` uses `useWishlist()` to remove the product
+2. `ProductRemoveFromWishlist` uses `useWishlist()` to remove the product
 3. Changes are auto-synced to the server
 
 ## Empty Handling

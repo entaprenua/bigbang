@@ -14,14 +14,14 @@ const ModeProvider = (props: { value: string, children?: JSX.Element }) => {
   )
 }
 
-type CategoryListProps = {
+type CategoriesProps = {
   mode?: string
   queryKey?: unknown[]
   enabled?: boolean
   children?: JSX.Element
 }
 
-const CategoryList = (rawProps: CategoryListProps) => {
+const Categories = (rawProps: CategoriesProps) => {
 
   const props = mergeProps({
     mode: "tree",
@@ -118,12 +118,12 @@ const CategorySubcategories = (props: CategorySubcategoriesProps) => {
   )
 }
 
-const DefaultCategoryListLoading = (props: { class?: string }) => (
+const DefaultCategoriesLoading = (props: { class?: string }) => (
   <div class={props.class ?? "flex flex-col gap-2 p-2"}>
     <div class="animate-pulse h-12 bg-muted rounded" />
     <div class="animate-pulse h-12 bg-muted rounded" />
   </div>
 )
 
-export { CategoryList, CategorySubcategories, DefaultCategoryListLoading }
-export type { CategoryListProps, CategorySubcategoriesProps }
+export { Categories, CategorySubcategories, DefaultCategoriesLoading }
+export type { CategoriesProps, CategorySubcategoriesProps }

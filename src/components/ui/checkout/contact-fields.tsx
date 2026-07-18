@@ -10,7 +10,7 @@ type CheckoutFieldProps = {
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const phoneRegex = /^\+?\d{7,15}$/
+const phoneRegex = /^(?:\+?254\d{9}|0\d{9})$/
 
 function CheckoutEmailTextField(props: CheckoutFieldProps) {
   const [local, others] = splitProps(props, ['children', 'class'])

@@ -1,5 +1,5 @@
 export function getApiPrefix(): string {
-  return import.meta.env.VITE_API_PREFIX || "/api/v1"
+  return import.meta.env.API_PREFIX || "/api/v1"
 }
 
 export function getProxyBaseUrl(): string {

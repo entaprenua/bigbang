@@ -1,8 +1,12 @@
 import {
   Product, ProductImage, ProductName, ProductPrice,
   ProductComparePrice, ProductDiscount, ProductInStockBadge,
-  ProductLowStockBadge, ProductOutOfStockBadge, ProductAddToCartTrigger
+  ProductLowStockBadge, ProductOutOfStockBadge, ProductAddToCart
 } from "~/components/ui/product"
+import { Flex } from "~/components/ui/flex"
+import { Currency } from "~/components/ui/currency"
+import { MutationButton, MutationLoading, MutationError } from "~/components/ui/query"
+import * as ProductActions from "./product-actions"
 
 export default function ProductCard() {
   return (
@@ -17,15 +21,12 @@ export default function ProductCard() {
             <span class="text-[11px] font-medium bg-background/90 text-foreground px-2 py-1 rounded-md backdrop-blur-sm shadow-sm">Out of Stock</span>
           </ProductOutOfStockBadge>
         </div>
-        <div class="absolute bottom-0 left-0 right-0 md:translate-y-full transition-transform duration-300 md:group-hover:translate-y-0">
-          <ProductAddToCartTrigger class="w-full py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors" />
-        </div>
       </div>
       <div class="p-3 space-y-1.5">
         <div class="text-sm font-medium line-clamp-2 leading-snug"><ProductName /></div>
         <div class="flex items-baseline gap-1.5">
-          <span class="text-sm font-bold"><ProductPrice /></span>
-          <span class="text-xs text-muted-foreground line-through"><ProductComparePrice /></span>
+          <span class="text-sm font-bold"><Currency /> <ProductPrice /></span>
+          <span class="text-xs text-muted-foreground line-through"><Currency /> <ProductComparePrice /></span>
         </div>
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <ProductLowStockBadge>
@@ -34,6 +35,11 @@ export default function ProductCard() {
           <ProductInStockBadge />
         </div>
       </div>
+      <div class="flex flex-col justify-center p-3 gap-2 w-full">
+        <ProductActions.CartQuantityBadge />
+        <ProductActions.AddToCart />
+      </div>
+
     </Product>
   )
 }

@@ -31,7 +31,7 @@ components/ui/recommendations/
   <Carousel>
     <CarouselContent>
       <RecommendationsItems>
-        <CollectionView>
+        <CollectionItems>
           <CarouselItem>
             <Product>
               <ProductImage class="rounded-lg aspect-square object-cover" />
@@ -39,7 +39,7 @@ components/ui/recommendations/
               <ProductPrice />
             </Product>
           </CarouselItem>
-        </CollectionView>
+        </CollectionItems>
       </RecommendationsItems>
     </CarouselContent>
     <CarouselNext />
@@ -127,7 +127,7 @@ type RecommendationContextValue = {
   <Carousel>
     <CarouselContent>
       <RecommendationsItems>
-        <CollectionView>
+        <CollectionItems>
           <CarouselItem>
             <Product>
               <ProductImage class="rounded-lg aspect-square object-cover" />
@@ -135,7 +135,7 @@ type RecommendationContextValue = {
               <ProductPrice />
             </Product>
           </CarouselItem>
-        </CollectionView>
+        </CollectionItems>
       </RecommendationsItems>
     </CarouselContent>
     <CarouselNext />
@@ -151,13 +151,13 @@ type RecommendationContextValue = {
   <RecommendationsTitle class="text-2xl font-bold mb-4" />
   <RecommendationsItems>
     <Grid cols={4} gap={4}>
-      <CollectionView>
+      <CollectionItems>
         <Product>
           <ProductImage class="rounded-lg aspect-square object-cover" />
           <ProductName />
           <ProductPrice />
         </Product>
-      </CollectionView>
+      </CollectionItems>
     </Grid>
   </RecommendationsItems>
 </RecommendationsRoot>
@@ -170,13 +170,13 @@ type RecommendationContextValue = {
   <RecommendationsTitle class="text-xl font-semibold mb-3" />
   <RecommendationsItems>
     <Flex gap={4} wrap>
-      <CollectionView>
+      <CollectionItems>
         <Product>
           <ProductImage class="w-32 h-32 rounded-lg object-cover" />
           <ProductName />
           <ProductPrice />
         </Product>
-      </CollectionView>
+      </CollectionItems>
     </Flex>
   </RecommendationsItems>
 </RecommendationsRoot>
@@ -189,13 +189,13 @@ type RecommendationContextValue = {
   <RecommendationsTitle class="text-xl font-semibold mb-3" />
       <RecommendationsItems>
         <Grid cols={4} gap={4}>
-      <CollectionView>
+      <CollectionItems>
         <Product>
           <ProductImage class="rounded-lg aspect-square object-cover" />
           <ProductName />
           <ProductPrice />
         </Product>
-      </CollectionView>
+      </CollectionItems>
     </Grid>
   </RecommendationsItems>
 </RecommendationsRoot>

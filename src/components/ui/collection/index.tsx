@@ -4,15 +4,15 @@
  * A data-fetching and layout system for rendering lists/grids of items.
  * 
  * Usage:
- *   - Remote fetch: Collection queryFn={fetchFn} layout="grid" columns={4} > CollectionView > children
- *   - Local data: Collection data={array} layout="grid" columns={4} > CollectionView > children
- *   - Static children: Collection > CollectionView > Component (uses useCollectionItem)
+ *   - Remote fetch: Collection queryFn={fetchFn} layout="grid" columns={4} > CollectionItems > children
+ *   - Local data: Collection data={array} layout="grid" columns={4} > CollectionItems > children
+ *   - Static children: Collection > CollectionItems > Component (uses useCollectionItem)
  *   - Fallbacks: Collection loadingFallback={...} errorFallback={...}
  * 
  * Flow:
  *   1. Collection wraps TanStack Query (queryFn) OR accepts local data
  *   2. Layout props (layout, columns, gap) passed to Collection
- *   3. CollectionView gets data/layout from Collection context
+ *   3. CollectionItems gets data/layout from Collection context
  *   4. Children: function (item, index) => JSX OR static JSX (wrapped in CollectionItem)
  *   5. CollectionItem provides context: { item, index, collection, value }
  *   6. useCollectionItem() accesses current item in child components
@@ -38,7 +38,7 @@ const CollectionContext = createContext<CollectionContextValue>()
 const useCollectionContext = (): CollectionContextValue => {
   const ctx = useContext(CollectionContext)
   if (!ctx) {
-    throw new Error("CollectionView must be used within Collection")
+    throw new Error("CollectionItems must be used within Collection")
   }
   return ctx
 }
@@ -184,17 +184,17 @@ const CollectionInner = (props: {
  * Use this as a wrapper to conditionally render content based on collection data.
  *
  * Usage:
- *   <CategoryList>
+ *   <Categories>
  *     <CollectionContent>
- *       <CategoryListView>
+ *       <CollectionItems>
  *         <Category />
- *       </CategoryListView>
+ *       </CollectionItems>
  *     </CollectionContent>
- *   </CategoryList>
+ *   </Categories>
  *
  * Aliases (via re-export):
- *   - CategoryListContent (category/category-list.tsx)
- *   - ProductListContent (product/product-list.tsx)
+ *   - CategoriesContent (category/category-list.tsx)
+ *   - ProductsContent (product/product-list.tsx)
  *   - HeroItemsContent (hero/hero-sections.tsx)
  *   - RecommendationsContent (recommendations/recommendations-root.tsx)
  */
@@ -242,7 +242,7 @@ const CollectionEmpty = (props: CollectionEmptyProps) => {
 }
 
 // ============================================================================
-// CollectionView (renders with layout)
+// CollectionItems (renders with layout)
 // ============================================================================
 
 /**
@@ -253,11 +253,11 @@ const CollectionEmpty = (props: CollectionEmptyProps) => {
  *   - class: CSS class for wrapper
  *   - children: JSX.Element OR function (item, index) => JSX
  */
-type CollectionViewProps = {
+type CollectionItemsProps = {
   children?: JSX.Element/* | ((item: any, index: number) => JSX.Element)*/
 }
 
-const CollectionView = (props: CollectionViewProps) => {
+const CollectionItems = (props: CollectionItemsProps) => {
   const [local] = splitProps(props, ["children"])
   const { data } = useCollectionContext()
 
@@ -275,7 +275,7 @@ const CollectionView = (props: CollectionViewProps) => {
 export {
   Collection,
   CollectionItem,
-  CollectionView,
+  CollectionItems,
   CollectionContent,
   CollectionEmpty,
   useCollection,
@@ -287,7 +287,7 @@ export {
 }
 
 export type {
-  CollectionViewProps,
+  CollectionItemsProps,
   CollectionItemProps,
   CollectionContentProps,
 }

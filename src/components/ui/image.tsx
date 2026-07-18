@@ -2,7 +2,7 @@ import type { ValidComponent } from "solid-js"
 import { splitProps, mergeProps } from "solid-js"
 import * as ImagePrimitive from "@kobalte/core/image"
 import type { PolymorphicProps } from "@kobalte/core/polymorphic"
-import { useProduct } from "./product/product-context"
+import { useProduct } from "./product/product-root"
 import { useCategory } from "./category/category-context"
 
 import { cn } from "~/lib/utils"
@@ -51,7 +51,9 @@ const ImageImg = <T extends ValidComponent = "img">(
 
   const src = () => {
     if (local.src) return local.src
-    if (product) return product?.data?.variants?.[0]?.image ?? product?.data?.media?.find(m => m.type === "image")?.url
+  if (product) return product?.variants?.[0]?.image
+    ?? product?.media?.find(m => m.type === "image")?.url
+    ?? product?.image
     if (category) return category.image()
     return undefined
   }

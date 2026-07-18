@@ -1,5 +1,5 @@
 import {
-  PRODUCT_FIELDS, CATEGORY_FIELDS, CART_FIELDS,
+  PRODUCT_BASIC_FIELDS, PRODUCT_DETAIL_FIELDS, CATEGORY_FIELDS, CART_FIELDS,
   HERO_FIELDS, ORDER_FIELDS, REVIEW_FIELDS,
   REVIEW_STATS_FIELDS, WISHLIST_FIELDS, STORE_FIELDS,
 } from "./fragments"
@@ -20,29 +20,29 @@ export const STORE_QUERY = `
 // ─── Products ───────────────────────────────────────────────
 
 export const PRODUCT_BY_SLUG = `
-  ${PRODUCT_FIELDS}
+  ${PRODUCT_BASIC_FIELDS}
+  ${PRODUCT_DETAIL_FIELDS}
   query ProductBySlug($slug: String!) {
     product(slug: $slug) {
-      ...ProductFields
-      media { id url type mimeType alt displayOrder }
-      metadata
+      ...ProductDetailFields
     }
   }
 `
 
 export const PRODUCT_BY_ID = `
-  ${PRODUCT_FIELDS}
+  ${PRODUCT_BASIC_FIELDS}
+  ${PRODUCT_DETAIL_FIELDS}
   query ProductById($id: String!) {
     product(id: $id) {
-      ...ProductFields
-      media { id url type mimeType alt displayOrder }
-      metadata
+      ...ProductDetailFields
     }
   }
 `
 
+// TODO: Switch back to PRODUCT_BASIC_FIELDS once listing UI no longer needs detail fields
 export const PRODUCTS_QUERY = `
-  ${PRODUCT_FIELDS}
+  ${PRODUCT_BASIC_FIELDS}
+  ${PRODUCT_DETAIL_FIELDS}
   query Products(
     $filters: ProductFiltersInput
     $after: String
@@ -51,7 +51,7 @@ export const PRODUCTS_QUERY = `
   ) {
     products(filters: $filters, after: $after, before: $before, size: $size) {
       edges {
-        node { ...ProductFields }
+        node { ...ProductDetailFields }
       }
       pageInfo {
         hasNextPage
@@ -95,25 +95,30 @@ export const CART_QUERY = `
   }
 `
 
-export const ADD_TO_CART_MUTATION = `
-  mutation AddToCart($input: CartItemInput!) {
-    addToCart(input: $input) {
+export const CART_ITEM_MUTATION = `
+  mutation CartItem($itemId: String, $productId: String, $quantity: Int, $selected: Boolean, $metadata: String) {
+    cartItem(input: { itemId: $itemId, productId: $productId, quantity: $quantity, selected: $selected, metadata: $metadata }) {
       id
-    }
-  }
-`
-
-export const UPDATE_CART_ITEM_MUTATION = `
-  mutation UpdateCartItem($variantId: String!, $quantity: Int, $selected: Boolean) {
-    updateCartItem(variantId: $variantId, quantity: $quantity, selected: $selected) {
-      id
+      productId
+      quantity
+      selected
+      price
+      subtotal
+      product {
+        id
+        parentId 
+        name
+        image
+        slug
+        options
+      }
     }
   }
 `
 
 export const REMOVE_CART_ITEM_MUTATION = `
-  mutation RemoveCartItem($variantId: String!) {
-    removeCartItem(variantId: $variantId)
+  mutation RemoveCartItem($itemId: String!) {
+    removeCartItem(itemId: $itemId)
   }
 `
 
@@ -165,11 +170,13 @@ export const HERO_QUERY = `
 
 // ─── Recommendations ────────────────────────────────────────
 
+// TODO: Switch back to PRODUCT_BASIC_FIELDS once recommendations UI no longer needs detail fields
 export const RECOMMENDATIONS_QUERY = `
-  ${PRODUCT_FIELDS}
+  ${PRODUCT_BASIC_FIELDS}
+  ${PRODUCT_DETAIL_FIELDS}
   query Recommendations($input: RecommendationsInput) {
     recommendations(input: $input) {
-      products { ...ProductFields }
+      products { ...ProductDetailFields }
       source
       fallback
     }
@@ -303,7 +310,7 @@ export const CONFIRM_PAYMENT_MUTATION = `
       success
       paymentId
       status
-      orderStatus
+      orderId
     }
   }
 `
@@ -320,6 +327,22 @@ export const ORDER_LOOKUP_QUERY = `
   }
 `
 
+// ─── Notifications ──────────────────────────────────────────
+
+export const NOTIFICATION_TEMPLATES_QUERY = `
+  query NotificationTemplates($eventType: String) {
+    notificationTemplates(eventType: $eventType) {
+      eventType
+      channel
+      subject
+      bodyHtml
+      bodyText
+      isActive
+      isDefault
+    }
+  }
+`
+
 // ─── Settings ───────────────────────────────────────────────
 
 export const STORE_SETTINGS_QUERY = `
@@ -329,10 +352,6 @@ export const STORE_SETTINGS_QUERY = `
       social
       about
       email
-      currencies
-      delivery {
-        shippingClasses { id name description }
-      }
     }
   }
 `
