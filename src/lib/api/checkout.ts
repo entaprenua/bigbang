@@ -62,20 +62,18 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
   const result = res.checkout
 
   if (result.success) {
-    if (data.provider === "mpesa") {
-      fetch("/api/pay/mpesa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId: result.orderId!,
-          orderNumber: result.orderNumber!,
-          paymentId: result.paymentId!,
-          amount: result.total!,
-          currency: result.currency!,
-          phone: data.paymentPhone,
-        }),
-      }).catch(() => {})
-    }
+    fetch(`/api/pay/${data.provider}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId: result.orderId!,
+        orderNumber: result.orderNumber!,
+        paymentId: result.paymentId!,
+        amount: result.total!,
+        currency: result.currency!,
+        phone: data.paymentPhone,
+      }),
+    }).catch(() => { })
     return {
       ...result,
       message: `Order #${result.orderNumber} confirmed!` +
