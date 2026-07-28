@@ -1,6 +1,5 @@
-"use server";
-
-import type { PaymentPayload, PaymentResult } from "."
+import type { APIEvent } from "@solidjs/start/server"
+import type { PaymentPayload, PaymentResult } from "~/lib/types"
 
 interface MpesaToken {
   access_token: string
@@ -55,12 +54,14 @@ function timestamp(): string {
   ].join("")
 }
 
-export async function initiateMpesaPayment(payload: PaymentPayload): Promise<PaymentResult> {
+export async function POST({ request }: APIEvent) {
+  const payload: PaymentPayload = await request.json()
+
   try {
     const shortcode = process.env.MPESA_SHORTCODE
     const passkey = process.env.MPESA_PASSKEY
     if (!shortcode || !passkey) {
-      return { success: false, provider: "mpesa", status: "failed", message: "M-Pesa not configured" }
+      return new Response(JSON.stringify({ success: false, provider: "mpesa", status: "failed", message: "M-Pesa not configured" }), { status: 422, headers: { "Content-Type": "application/json" } })
     }
 
     const token = await getAccessToken()
@@ -69,16 +70,17 @@ export async function initiateMpesaPayment(payload: PaymentPayload): Promise<Pay
 
     const amount = Math.round(parseFloat(payload.amount))
     if (isNaN(amount) || amount <= 0) {
-      return { success: false, provider: "mpesa", status: "failed", message: "Invalid amount" }
+      return new Response(JSON.stringify({ success: false, provider: "mpesa", status: "failed", message: "Invalid amount" }), { status: 422, headers: { "Content-Type": "application/json" } })
     }
 
     const phone = payload.phone.replace(/^0+/, "254").replace(/^\+/, "")
     if (!/^254\d{9}$/.test(phone)) {
-      return { success: false, provider: "mpesa", status: "failed", message: "Invalid phone number" }
+      return new Response(JSON.stringify({ success: false, provider: "mpesa", status: "failed", message: "Invalid phone number" }), { status: 422, headers: { "Content-Type": "application/json" } })
     }
 
-    const base = process.env.MPESA_CALLBACK_URL || payload.callbackUrl || ""
-    const callbackUrl = `${base}/api/mpesa/callback/${payload.paymentId}`
+    const host = request.headers.get("host") || "localhost"
+    const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https"
+    const callbackUrl = `${protocol}://${host}/api/pay/mpesa/${payload.paymentId}`
 
     const body = {
       BusinessShortCode: shortcode,
@@ -105,24 +107,16 @@ export async function initiateMpesaPayment(payload: PaymentPayload): Promise<Pay
 
     const data: StkPushResponse = await res.json()
 
-    if (data.ResponseCode === "0") {
-      return {
-        success: true,
-        provider: "mpesa",
-        transactionId: data.CheckoutRequestID,
-        status: "pending",
-        message: data.ResponseDescription,
-      }
-    }
+    const result: PaymentResult = data.ResponseCode === "0"
+      ? { success: true, provider: "mpesa", transactionId: data.CheckoutRequestID, status: "pending", message: data.ResponseDescription }
+      : { success: false, provider: "mpesa", status: "failed", message: data.errorMessage || data.ResponseDescription || "STK push failed" }
 
-    return {
-      success: false,
-      provider: "mpesa",
-      status: "failed",
-      message: data.errorMessage || data.ResponseDescription || "STK push failed",
-    }
+    return new Response(JSON.stringify(result), {
+      status: result.success ? 200 : 422,
+      headers: { "Content-Type": "application/json" },
+    })
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error"
-    return { success: false, provider: "mpesa", status: "failed", message }
+    return new Response(JSON.stringify({ success: false, provider: "mpesa", status: "failed", message }), { status: 422, headers: { "Content-Type": "application/json" } })
   }
 }

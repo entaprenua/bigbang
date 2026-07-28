@@ -13,14 +13,14 @@ import { Suspense } from "solid-js"
 
 function HeroSection() {
   return (
-    <HeroRoot class="w-full">
+    <HeroRoot class="w-full h-auto">
       <Carousel autoplay opts={{ loop: true }} class="group">
         <CarouselContent>
           <HeroItems>
             <CollectionItems>
               <CarouselItem class="w-full">
-                <HeroItem aspectRatio="2/1" maxHeight={500}>
-                  <HeroBackground />
+                <HeroItem aspectRatio="2/1" maxHeight={350}>
+                  {/*<HeroBackground />
                   <HeroContent contentPosition="center">
                     <HeroSubtitle />
                     <HeroTitle />
@@ -30,6 +30,7 @@ function HeroSection() {
                       <HeroCtaSecondary />
                     </Flex>
                   </HeroContent>
+                 */}
                 </HeroItem>
               </CarouselItem>
             </CollectionItems>

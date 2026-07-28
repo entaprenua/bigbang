@@ -1,6 +1,6 @@
 import { splitProps, type JSX } from 'solid-js'
 import { MutationProvider } from '~/components/ui/query'
-import { submitCheckout } from '~/lib/payments'
+import { submitCheckout } from '~/lib/api/checkout'
 import { useCheckout } from './checkout-context'
 import { useDirectBuy } from '../direct-buy/direct-buy-context'
 

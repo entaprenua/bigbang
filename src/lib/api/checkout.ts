@@ -1,57 +1,14 @@
-"use server";
-
 import { executeGQL } from "~/lib/graphql/server"
-import { CHECKOUT_MUTATION, CLEAR_SELECTED_CART_ITEMS_MUTATION } from "~/lib/graphql/queries"
+import { CHECKOUT_MUTATION } from "~/lib/graphql/queries"
 import { cartsApi } from "~/lib/api/carts"
-import { getRequestEvent } from "solid-js/web"
 import type { CheckoutInput, CheckoutItemInput, CheckoutResult } from "~/lib/types"
-
-export type PaymentProvider = "mpesa"
-
-export interface PaymentPayload {
-  orderId: string
-  orderNumber: string
-  paymentId: string
-  amount: string
-  currency: string
-  phone: string
-  email?: string
-  metadata?: Record<string, string>
-  callbackUrl?: string
-}
-
-export interface PaymentResult {
-  success: boolean
-  provider: PaymentProvider
-  transactionId?: string
-  status: string
-  message?: string
-}
-
-export interface CheckoutFormData {
-  email: string
-  name: string
-  phone: string
-  provider: string
-  paymentPhone: string
-  deliveryMethod: string
-  deliveryLocation: string
-  deliveryZone: string
-  shippingAddress: Record<string, string>
-  billingAddress: Record<string, string>
-  notes: string
-  directBuy?: {
-    productId: string
-    quantity: number
-    subtotal: string
-  }
-}
+import type { CheckoutFormData } from "~/lib/types/checkout"
 
 function hasAny(r: Record<string, string>): boolean {
   return Object.values(r).some(v => v !== undefined && v !== null && v !== "")
 }
 
-export async function submitCheckout(data: CheckoutFormData, timeoutMinutes = 15): Promise<CheckoutResult & { message: string }> {
+export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutResult & { message: string }> {
   let items: CheckoutItemInput[]
 
   if (data.directBuy) {
@@ -97,7 +54,6 @@ export async function submitCheckout(data: CheckoutFormData, timeoutMinutes = 15
     shippingAddress: hasAny(data.shippingAddress) ? JSON.stringify(data.shippingAddress) : undefined,
     billingAddress: hasAny(data.billingAddress) ? JSON.stringify(data.billingAddress) : undefined,
     name: data.name || undefined,
-    timeoutMinutes: timeoutMinutes ?? undefined,
     phone: data.phone || undefined,
     notes: data.notes || undefined,
   }
@@ -107,20 +63,18 @@ export async function submitCheckout(data: CheckoutFormData, timeoutMinutes = 15
 
   if (result.success) {
     if (data.provider === "mpesa") {
-      const event = getRequestEvent()
-      const host = event?.request.headers.get("host")
-      const callbackUrl = host
-        ? `${host.includes("localhost") ? "http" : "https"}://${host}`
-        : undefined
-      processPayment("mpesa", {
-        orderId: result.orderId!,
-        orderNumber: result.orderNumber!,
-        paymentId: result.paymentId!,
-        amount: result.total!,
-        currency: result.currency!,
-        phone: data.paymentPhone,
-        callbackUrl,
-      }).catch(() => { })
+      fetch("/api/pay/mpesa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: result.orderId!,
+          orderNumber: result.orderNumber!,
+          paymentId: result.paymentId!,
+          amount: result.total!,
+          currency: result.currency!,
+          phone: data.paymentPhone,
+        }),
+      }).catch(() => {})
     }
     return {
       ...result,
@@ -130,18 +84,4 @@ export async function submitCheckout(data: CheckoutFormData, timeoutMinutes = 15
   }
 
   return { ...result, message: result.status ?? "Checkout failed" }
-}
-
-async function mpesa(payload: PaymentPayload): Promise<PaymentResult> {
-  const { initiateMpesaPayment } = await import("./mpesa")
-  return initiateMpesaPayment(payload)
-}
-
-export async function processPayment(provider: PaymentProvider, payload: PaymentPayload): Promise<PaymentResult> {
-  switch (provider) {
-    case "mpesa":
-      return mpesa(payload)
-    default:
-      return { success: false, provider, status: "failed", message: `Unsupported provider: ${provider}` }
-  }
 }

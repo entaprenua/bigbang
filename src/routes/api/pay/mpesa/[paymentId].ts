@@ -1,7 +1,7 @@
 import type { APIEvent } from "@solidjs/start/server"
 import { executeGQL } from "~/lib/graphql/server"
 import { CONFIRM_PAYMENT_MUTATION } from "~/lib/graphql/queries"
-import { sendOrderNotification } from "~/lib/notifications/send"
+import { buildOrderContext } from "~/lib/notifications/contexts"
 
 interface StkCallback {
   MerchantRequestID?: string
@@ -51,9 +51,17 @@ export async function POST({ params, request }: APIEvent) {
 
   if (res?.confirmPayment?.orderId) {
     const eventType = status === "SUCCEEDED" ? "order_confirmation" : "payment_failed"
-    sendOrderNotification(res.confirmPayment.orderId, eventType).catch((err) => {
+    const send = async () => {
+      const context = await buildOrderContext(res.confirmPayment!.orderId!)
+      await fetch(`/api/notifications/${eventType}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(context),
+      })
+    }
+    send().catch((err) => {
       console.error(`Failed to send ${eventType} notification:`, err)
-      sendOrderNotification(res.confirmPayment.orderId, eventType).catch((err) => {
+      send().catch((err) => {
         console.error(`Failed to send ${eventType} notification:`, err)
       })
     })
