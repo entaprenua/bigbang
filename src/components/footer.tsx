@@ -4,7 +4,6 @@ import { Flex } from "~/components/ui/flex"
 import { SettingsProvider } from "~/components/ui/settings"
 import { SocialEntry, SocialEntryLink } from "~/components/ui/social"
 import { StoreName } from "~/components/store"
-import { StoreDescription } from "~/components/ui/store"
 
 export function Footer() {
   return (
@@ -16,9 +15,6 @@ export function Footer() {
               <h3 class="text-white font-serif text-lg mb-6">
                 <StoreName />
               </h3>
-              <p class="text-sm leading-relaxed">
-                <StoreDescription />
-              </p>
             </div>
             <div>
               <h3 class="text-white font-serif text-lg mb-6">Help</h3>

@@ -7,3 +7,4 @@ export { heroApi } from './heroes';
 export { recommendationsApi } from './recommendations';
 export { settingsApi } from './settings';
 export { reviewsApi } from './reviews';
+export { notificationsApi } from './notifications';

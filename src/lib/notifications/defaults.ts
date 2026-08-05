@@ -20,7 +20,7 @@ export type CartItem = {
 }
 
 export type OrderEventContext = {
-  customer: { name: string; email: string }
+  customer: { id?: string; name: string; email: string }
   order: {
     orderNumber: string
     total: string

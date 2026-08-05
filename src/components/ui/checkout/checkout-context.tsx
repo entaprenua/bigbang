@@ -1,10 +1,10 @@
 import { createContext, useContext, type JSX } from 'solid-js'
 import { createStore } from 'solid-js/store'
+import { ReactiveSet } from '@solid-primitives/set'
 
 type CheckoutFormData = {
-  email: string
+  contact: string
   name: string
-  phone: string
   deliveryMethod: string
   deliveryLocation: string
   deliveryZone: string
@@ -26,12 +26,12 @@ type CheckoutContextType = {
   setAddressField: (type: AddressType, key: string, value: string) => void
   setStep: (step: CheckoutStep) => void
   reset: () => void
+  unsatisfiedFields: ReactiveSet<string>
 }
 
 const defaultFormData: CheckoutFormData = {
-  email: '',
+  contact: '',
   name: '',
-  phone: '',
   deliveryMethod: '',
   deliveryLocation: '',
   deliveryZone: '',
@@ -49,6 +49,7 @@ function CheckoutProvider(props: { children?: JSX.Element }) {
     formData: { ...defaultFormData },
     step: 'contact' as CheckoutStep,
   })
+  const unsatisfiedFields = new ReactiveSet<string>()
 
   const setField = <K extends keyof CheckoutFormData>(key: K, value: CheckoutFormData[K]) => {
     setState('formData', key, value)
@@ -63,6 +64,7 @@ function CheckoutProvider(props: { children?: JSX.Element }) {
   const reset = () => {
     setState('formData', { ...defaultFormData })
     setState('step', 'contact')
+    unsatisfiedFields.clear()
   }
 
   return (
@@ -74,9 +76,12 @@ function CheckoutProvider(props: { children?: JSX.Element }) {
         setAddressField,
         setStep,
         reset,
+        unsatisfiedFields,
       }}
     >
-      {props.children}
+      <div class="group" data-can-checkout={unsatisfiedFields.size === 0 && !!state.formData.paymentMethod ? "" : undefined}>
+        {props.children}
+      </div>
     </CheckoutContext.Provider>
   )
 }

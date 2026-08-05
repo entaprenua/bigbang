@@ -171,6 +171,7 @@ export const HERO_FIELDS = `
 export const ORDER_FIELDS = `
   fragment OrderFields on Order {
     id
+    customerId
     orderNumber
     status
     total

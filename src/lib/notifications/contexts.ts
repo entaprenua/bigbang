@@ -4,6 +4,7 @@ import type { OrderEventContext, CartAbandonedContext } from "./defaults"
 
 interface OrderResult {
   id: string
+  customerId?: string | null
   orderNumber: string
   status?: string | null
   total?: string | null
@@ -45,6 +46,7 @@ export async function buildOrderContext(orderId: string): Promise<OrderEventCont
 
   return {
     customer: {
+      id: order?.customerId ?? undefined,
       name: order?.name ?? "Customer",
       email: order?.email ?? "",
     },

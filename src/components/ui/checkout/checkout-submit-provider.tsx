@@ -19,9 +19,8 @@ function CheckoutSubmitProvider(props: CheckoutSubmitProviderProps) {
     <MutationProvider
       mutationFn={async () => {
         return submitCheckout({
-          email: formData.email,
+          contact: formData.contact,
           name: formData.name,
-          phone: formData.phone,
           provider: formData.paymentMethod || 'mpesa',
           paymentPhone: formData.paymentPhone,
           deliveryMethod: formData.deliveryMethod,

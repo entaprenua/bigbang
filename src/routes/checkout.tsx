@@ -1,16 +1,14 @@
 import {
   CheckoutSettingsProvider,
   CheckoutProvider,
-  CheckoutEmailTextField,
+  CheckoutContactTextField,
   CheckoutNameTextField,
-  CheckoutPhoneTextField,
   CheckoutNotesTextArea,
   CheckoutDeliveryZones,
   CheckoutDeliveryZoneName,
   CheckoutDeliveryLocationSegmentedControl,
   CheckoutPaymentMethod,
   CheckoutPaymentMethodSelectButton,
-  CheckoutPaymentMethodRadioGroup,
   CheckoutShippingStreetField,
   CheckoutShippingCityField,
   CheckoutShippingStateField,
@@ -21,6 +19,7 @@ import {
   CheckoutSubmitProvider,
   CheckoutResult,
 } from "~/components/ui/checkout"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "~/components/ui/accordion"
 import { DirectBuyProvider } from "~/components/ui/direct-buy/direct-buy-context"
 import {
   MutationButton,
@@ -70,10 +69,9 @@ export default function CheckoutPage() {
                   {/* ── Contact ── */}
                   <section>
                     <Text variant="h3" class="font-serif font-light mb-4">Contact</Text>
-                    <div class="bg-white rounded-sm p-6 space-y-4">
-                      <CheckoutEmailTextField />
+                    <div class="rounded-sm p-6 space-y-4">
+                      <CheckoutContactTextField />
                       <CheckoutNameTextField />
-                      <CheckoutPhoneTextField />
                       <CheckoutNotesTextArea />
                     </div>
                   </section>
@@ -81,7 +79,7 @@ export default function CheckoutPage() {
                   {/* ── Delivery ── */}
                   <section>
                     <Text variant="h3" class="font-serif font-light">Delivery Location</Text>
-                    <div class="bg-white rounded-sm p-6 space-y-6">
+                    <div class="rounded-sm p-6 space-y-6">
                       <div class="border rounded-sm p-4 space-y-3">
                         <CheckoutDeliveryZones>
                           <Grid cols={1} colsSm={2} colsMd={3} colsLg={4} class="gap-4">
@@ -119,22 +117,33 @@ export default function CheckoutPage() {
                   {/* ── Payment ── */}
                   <section>
                     <Text variant="h3" class="font-serif font-light">Payment</Text>
-                    <div class="bg-white rounded-sm p-6 space-y-4">
-                      <CheckoutPaymentMethodRadioGroup>
-                        <Flex class="gap-3">
-                          <CheckoutPaymentMethod method="mpesa">
-                            <CheckoutPaymentMethodSelectButton>
-                              M-Pesa
-                            </CheckoutPaymentMethodSelectButton>
-                          </CheckoutPaymentMethod>
-                          <CheckoutPaymentMethod method="stripe">
-                            <CheckoutPaymentMethodSelectButton>
-                              Card
-                            </CheckoutPaymentMethodSelectButton>
-                          </CheckoutPaymentMethod>
-                        </Flex>
-                      </CheckoutPaymentMethodRadioGroup>
-                      <CheckoutPaymentPhoneTextField />
+                    <div class="rounded-sm p-6 space-y-4">
+                      <Accordion collapsible>
+                        <CheckoutPaymentMethod method="mpesa">
+                          <AccordionItem value="mpesa">
+                            <AccordionTrigger as={CheckoutPaymentMethodSelectButton}>
+                              <span>M-Pesa</span>
+                              <span class="text-xs text-muted-foreground">Pay via mobile money</span>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div class="space-y-4 pt-4">
+                                <CheckoutPaymentPhoneTextField />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </CheckoutPaymentMethod>
+                        <CheckoutPaymentMethod method="stripe">
+                          <AccordionItem value="stripe">
+                            <AccordionTrigger as={CheckoutPaymentMethodSelectButton}>
+                              <span>Card</span>
+                              <span class="text-xs text-muted-foreground">Pay via credit or debit card</span>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div class="space-y-4 pt-4" />
+                            </AccordionContent>
+                          </AccordionItem>
+                        </CheckoutPaymentMethod>
+                      </Accordion>
                     </div>
                   </section>
 
@@ -163,7 +172,7 @@ export default function CheckoutPage() {
                     <Separator />
 
                     <CheckoutSubmitProvider>
-                      <MutationButton class="w-full bg-blue-500 hover:bg-stone-700 py-3 rounded-sm">
+                      <MutationButton class="w-full bg-blue-500 hover:bg-stone-700 py-3 rounded-sm group-not-data-[can-checkout]:pointer-events-none group-not-data-[can-checkout]:opacity-50">
                         Place Order
                       </MutationButton>
                       <MutationLoading />

@@ -23,10 +23,10 @@ components/ui/checkout/
 ├── checkout-settings.tsx         # CheckoutSettingsProvider — fetches delivery zones from API
 ├── checkout-delivery-method.tsx  # Delivery method selection: Select, RadioGroup, SegmentedControl
 ├── checkout-delivery-location.tsx # Delivery location selection: Select, RadioGroup, SegmentedControl
-├── contact-fields.tsx            # Self-contained field atoms (email, name, phone, notes, paymentPhone)
+├── contact-fields.tsx            # Self-contained field atoms (contact, name, notes)
 ├── address-fields.tsx            # Address field atoms via createAddressField factory
 ├── checkout-delivery-zone.tsx    # Zone resolution + method detail: label, price, conditions, class prices, estimates
-├── checkout-payment-method.tsx   # Payment method selection: SelectButton, RadioGroup, SegmentedControl, wrapper
+├── checkout-payment-method.tsx   # Payment method selection: SelectButton, RadioGroup, SegmentedControl, wrapper + provider-specific fields (e.g. payment phone)
 ├── checkout-submit-provider.tsx  # MutationProvider wrapper — reads form data from context
 ├── checkout-result.tsx           # Success/error display from mutation state
 └── STRUCTURE.md                  # This file
@@ -89,7 +89,8 @@ CheckoutSubmitProvider reads formData and derives metadata from matched zone:
   → deliveryMethod → deliveryMethod (label), plus matched methodId + zoneId
   → deliveryLocation → deliveryCountry, deliveryCity (maps to backend fields)
   → shippingAddress, billingAddress (AddressInput { street, city, state, zip, country })
-  → name, phone, notes
+  → name, notes
+  → contact → customerEmail (if contains '@') or phone
         │
         ▼
 GraphQL checkout(input: { cartId | lineItems, provider, deliveryMethod,
@@ -103,11 +104,11 @@ GraphQL checkout(input: { cartId | lineItems, provider, deliveryMethod,
 
 ```typescript
 type CheckoutFormData = {
-  email: string
+  contact: string
   name: string
-  phone: string
   deliveryMethod: string
   deliveryLocation: string
+  deliveryZone: string
   billingAddress: Record<string, string>
   shippingAddress: Record<string, string>
   notes: string
@@ -115,6 +116,8 @@ type CheckoutFormData = {
   paymentPhone: string
 }
 ```
+
+`contact` is a single field holding either an email or phone number — inferred by presence of `@` at submit time (see `CheckoutContactTextField` and `lib/api/checkout.ts`).
 
 ### CheckoutSettingsProvider
 
@@ -153,7 +156,11 @@ type CheckoutContextType = {
   setAddressField: (type: 'shipping' | 'billing', key: string, value: string) => void
   setStep: (step: CheckoutStep) => void
   reset: () => void
+  unsatisfiedFields: ReactiveSet<string>  // fields that are required-but-missing or invalid; each field self-registers
 }
+```
+
+`unsatisfiedFields` is a dumb reactive `Set` (`@solid-primitives/set`). It has zero knowledge of validation or error UI — each field independently owns its own validation/error display and syncs itself via a `createEffect` (e.g. `ok ? unsatisfiedFields.delete('paymentPhone') : unsatisfiedFields.add('paymentPhone')`). `reset()` clears it.
 ```
 
 ### Checkout Delivery Method
@@ -313,17 +320,19 @@ type CheckoutPaymentMethodSegmentedControlProps = {
 
 **Without `CheckoutSettingsProvider`:** All methods render (no gating). `CheckoutPaymentMethod` always shows children.
 
+**Context:** `CheckoutPaymentMethod` provides `{ method }` via `CheckoutPaymentMethodContext`. Any payment-method-specific UI (e.g. `CheckoutPaymentPhoneTextField`) must be wrapped inside a `CheckoutPaymentMethod` block and consume the nearest context via `useCheckoutPaymentMethodOptional()`. The wrapper's `<Show>` gates by *enabled*; selection is read from `formData.paymentMethod`.
+
 ### Contact Fields
 
 Self-contained field atoms with validation and default rendering:
 
 ```typescript
-<CheckoutEmailTextField />         // Email validation regex
-<CheckoutNameTextField />          // Required name
-<CheckoutPhoneTextField />         // Phone format validation
-<CheckoutNotesTextArea />          // Optional notes
-<CheckoutPaymentPhoneTextField />  // Payment phone (M-Pesa number)
+<CheckoutContactTextField />    // Email-or-phone (required; validated as either)
+<CheckoutNameTextField />       // Optional name
+<CheckoutNotesTextArea />       // Optional notes
 ```
+
+`CheckoutContactTextField` holds a single `formData.contact` value. It is valid if the value is a valid email **or** phone; it self-registers as unsatisfied when empty or invalid (required field).
 
 Each renders as:
 ```tsx
@@ -336,14 +345,24 @@ Each renders as:
 
 Override rendering by passing children:
 ```tsx
-<CheckoutEmailTextField>
+<CheckoutContactTextField>
   <TextField class="flex flex-col gap-1">
-    <TextFieldLabel class="font-semibold">Email Address</TextFieldLabel>
+    <TextFieldLabel class="font-semibold">Contact</TextFieldLabel>
     <TextFieldInput class="border-2 p-3 rounded-lg" />
     <TextFieldErrorMessage class="text-red-500 text-sm" />
   </TextField>
-</CheckoutEmailTextField>
+</CheckoutContactTextField>
 ```
+
+### Payment Method Sections
+
+Provider-specific fields (in `checkout-payment-method.tsx`) that consume the nearest `CheckoutPaymentMethod` context (via `useCheckoutPaymentMethodOptional`):
+
+```typescript
+<CheckoutPaymentPhoneTextField />  // Payment phone — only required when the wrapping method is selected
+```
+
+The field renders the provider name in its label/error (e.g. "M-Pesa Phone") from `PAYMENT_LABELS[method]`. Its `createEffect` only registers `paymentPhone` as unsatisfied when the wrapping method is **selected** (`formData.paymentMethod === method()`) — since a disabled method can't be selected, no explicit `enabled` flag is needed.
 
 ### Address Fields
 
@@ -365,8 +384,9 @@ Wraps `MutationProvider`, reads `formData` from `CheckoutContext` and `deliveryZ
 - `deliveryMethod` (label), `deliveryMethodId` + `deliveryZoneId` derived from matched zone
 - `deliveryLocation` → `deliveryCountry` / `deliveryCity` (maps to backend fields)
 - `shippingAddress`, `billingAddress`
-- `name`, `phone`, `notes`
-- `paymentPhone`, `customerEmail`
+- `name`, `notes`
+- `contact` → `customerEmail` (contains `@`) or `phone` (otherwise)
+- `paymentPhone`
 
 All fields are sent to the GraphQL `checkout` mutation as `CheckoutInput`.
 
@@ -392,9 +412,8 @@ function CheckoutPage() {
       <CheckoutProvider>
         <CheckoutContactStep>
           <div class="space-y-4">
-            <CheckoutEmailTextField />
+            <CheckoutContactTextField />
             <CheckoutNameTextField />
-            <CheckoutPhoneTextField />
             <CheckoutNotesTextArea />
           </div>
         </CheckoutContactStep>
@@ -433,6 +452,7 @@ function CheckoutPage() {
                   <RadioGroupItemLabel>M-Pesa</RadioGroupItemLabel>
                   <RadioGroupItemDescription>Pay via mobile money</RadioGroupItemDescription>
                 </RadioGroupItem>
+                <CheckoutPaymentPhoneTextField />
               </CheckoutPaymentMethod>
               <CheckoutPaymentMethod method="stripe">
                 <RadioGroupItem value="stripe">
@@ -441,8 +461,6 @@ function CheckoutPage() {
                 </RadioGroupItem>
               </CheckoutPaymentMethod>
             </CheckoutPaymentMethodRadioGroup>
-
-            <CheckoutPaymentPhoneTextField />
 
             <CheckoutSubmitProvider>
               <CheckoutButton>Pay</CheckoutButton>
@@ -581,13 +599,13 @@ already known from the accordion state. Two approaches:
 ### Custom Field Rendering
 
 ```tsx
-<CheckoutEmailTextField>
+<CheckoutContactTextField>
   <TextField class="flex flex-col gap-1">
-    <TextFieldLabel class="font-semibold">Email Address</TextFieldLabel>
+    <TextFieldLabel class="font-semibold">Contact</TextFieldLabel>
     <TextFieldInput class="border-2 p-3 rounded-lg" />
     <TextFieldErrorMessage class="text-red-500 text-sm" />
   </TextField>
-</CheckoutEmailTextField>
+</CheckoutContactTextField>
 ```
 
 ### Accessing Checkout State
@@ -647,7 +665,7 @@ Provided by `CheckoutSettingsProvider`. Fetches delivery zones from the API. Pay
 
 // Steps are optional. Omit them to show all sections at once:
 <CheckoutProvider>
-  <CheckoutEmailTextField />
+  <CheckoutContactTextField />
   <CheckoutDeliveryMethodRadioGroup />
   <CheckoutPaymentMethodRadioGroup />
   <CheckoutSubmitProvider>...</CheckoutSubmitProvider>

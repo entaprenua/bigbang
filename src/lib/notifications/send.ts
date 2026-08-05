@@ -1,6 +1,6 @@
 import Handlebars from "handlebars"
 import { executeGQL } from "~/lib/graphql/server"
-import { STORE_QUERY, NOTIFICATION_TEMPLATES_QUERY } from "~/lib/graphql/queries"
+import { STORE_QUERY, NOTIFICATION_TEMPLATES_QUERY, CREATE_NOTIFICATION_MUTATION } from "~/lib/graphql/queries"
 import { sendEmail } from "~/lib/email"
 import { defaultNotificationTemplates } from "./defaults"
 
@@ -19,14 +19,20 @@ export async function sendNotification(
   context: Record<string, unknown>,
 ): Promise<void> {
   const [storeResult, templatesResult] = await Promise.all([
-    executeGQL<{ store: { name: string } }>(STORE_QUERY),
+    executeGQL<{ store: { name: string } }>(STORE_QUERY).catch((err) => {
+      console.error("[notifications] STORE_QUERY failed:", err)
+      return null
+    }),
     executeGQL<{ notificationTemplates: NotificationTemplateResult[] }>(
       NOTIFICATION_TEMPLATES_QUERY,
       { eventType },
-    ),
+    ).catch((err) => {
+      console.error("[notifications] NOTIFICATION_TEMPLATES_QUERY failed:", err)
+      return null
+    }),
   ])
 
-  const storeName = storeResult.store?.name ?? "Store"
+  const storeName = storeResult?.store?.name ?? "Store"
   const customer = context.customer as { name?: string; email?: string } | undefined
   const email = customer?.email
   if (!email) {
@@ -34,7 +40,7 @@ export async function sendNotification(
     return
   }
 
-  const template = templatesResult.notificationTemplates.find(
+  const template = templatesResult?.notificationTemplates?.find(
     (t) => t.eventType === eventType,
   )
 
@@ -56,15 +62,48 @@ export async function sendNotification(
     const renderHtml = Handlebars.compile(bodyHtml)(context)
     const renderText = Handlebars.compile(bodyText)(context)
 
-    await sendEmail({
+    const result = await sendEmail({
       to: email,
       subject: renderSubject,
       html: renderHtml,
       text: renderText,
-      from: `${storeEmailPrefix}@entaprenua.com`,
+      from: process.env.EMAIL_FROM ? undefined : `${storeEmailPrefix}@entaprenua.com`,
       fromName: storeName,
+    })
+
+    const customerId = (context.customer as { id?: string })?.id
+    const dedupKey = customerId
+      ? `${eventType}:${customerId}`
+      : `${eventType}:${email}`
+
+    await executeGQL(CREATE_NOTIFICATION_MUTATION, {
+      input: {
+        type: eventType,
+        customerId: customerId || null,
+        channel: "email",
+        provider: "resend",
+        providerMessageId: result.data?.id || null,
+        status: "SENT",
+        dedupKey,
+      },
     })
   } catch (err) {
     console.error(`[notifications] Failed to send ${eventType}:`, err)
+    const customerId = (context.customer as { id?: string })?.id
+    const dedupKey = customerId
+      ? `${eventType}:${customerId}`
+      : `${eventType}:${email}`
+
+    await executeGQL(CREATE_NOTIFICATION_MUTATION, {
+      input: {
+        type: eventType,
+        customerId: customerId || null,
+        channel: "email",
+        provider: "resend",
+        status: "FAILED",
+        error: err instanceof Error ? err.message : String(err),
+        dedupKey,
+      },
+    }).catch((persistErr) => console.error(`[notifications] Failed to persist FAILED record for ${eventType}:`, persistErr))
   }
 }

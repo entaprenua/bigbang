@@ -343,6 +343,55 @@ export const NOTIFICATION_TEMPLATES_QUERY = `
   }
 `
 
+export const NOTIFICATIONS_QUERY = `
+  query Notifications($page: Int, $size: Int, $first: Int, $after: String, $before: String) {
+    notifications(page: $page, size: $size, first: $first, after: $after, before: $before) {
+      edges {
+        node {
+          id
+          type
+          channel
+          subject
+          body
+          metadata
+          status
+          readAt
+          insertedAt
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+  }
+`
+
+export const UNREAD_NOTIFICATION_COUNT_QUERY = `
+  query UnreadNotificationCount {
+    unreadNotificationCount
+  }
+`
+
+export const MARK_NOTIFICATIONS_READ_MUTATION = `
+  mutation MarkNotificationsRead($ids: [String!]) {
+    markNotificationsRead(ids: $ids)
+  }
+`
+
+export const CREATE_NOTIFICATION_MUTATION = `
+  mutation CreateNotification($input: NotificationInput!) {
+    createNotification(input: $input) {
+      id
+      status
+    }
+  }
+`
+
 // ─── Settings ───────────────────────────────────────────────
 
 export const STORE_SETTINGS_QUERY = `

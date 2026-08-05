@@ -37,6 +37,8 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
   const subtotal = items.reduce((s, i) => s + parseFloat(i.subtotal), 0).toFixed(2)
   const total = subtotal
 
+  const isEmail = data.contact.includes("@")
+
   const input: CheckoutInput = {
     items,
     subtotal,
@@ -47,14 +49,14 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
     currency: "KES",
     provider: data.provider,
     paymentPhone: data.paymentPhone || undefined,
-    customerEmail: data.email || undefined,
+    customerEmail: isEmail ? data.contact : undefined,
     deliveryMethod: data.deliveryMethod || undefined,
     deliveryLocation: data.deliveryLocation || undefined,
     deliveryZone: data.deliveryZone || undefined,
     shippingAddress: hasAny(data.shippingAddress) ? JSON.stringify(data.shippingAddress) : undefined,
     billingAddress: hasAny(data.billingAddress) ? JSON.stringify(data.billingAddress) : undefined,
     name: data.name || undefined,
-    phone: data.phone || undefined,
+    phone: isEmail ? undefined : data.contact || undefined,
     notes: data.notes || undefined,
   }
 
@@ -62,7 +64,7 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
   const result = res.checkout
 
   if (result.success) {
-    fetch(`/api/pay/${data.provider}`, {
+    const payment = await fetch(`/api/pay/${data.provider}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -73,11 +75,15 @@ export async function submitCheckout(data: CheckoutFormData): Promise<CheckoutRe
         currency: result.currency!,
         phone: data.paymentPhone,
       }),
-    }).catch(() => { })
+    }).then(r => r.json()).catch(() => null)
+
+    const message = payment?.success
+      ? payment.message ?? "Order placed — payment pending"
+      : `Order placed but payment could not be initiated: ${payment?.message ?? "unknown error"}`
+
     return {
       ...result,
-      message: `Order #${result.orderNumber} confirmed!` +
-        (result.total ? ` Total: ${result.total} ${result.currency}` : ""),
+      message,
     }
   }
 

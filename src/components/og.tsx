@@ -20,7 +20,7 @@ function ogImageUrl(title: string, description: string): string {
 export function OGMeta(props: OGMetaProps) {
   const ctx = useStore()
   const title = () => props.title ?? ctx?.store()?.name ?? "Store"
-  const description = () => props.description ?? ctx?.store()?.description ?? ""
+  const description = () => props.description ?? ""
   const image = () =>
     props.image || (description()
       ? ogImageUrl(title(), description())

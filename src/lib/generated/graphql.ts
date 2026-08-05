@@ -329,6 +329,7 @@ export type Mutation = {
   confirmPayment: PaymentConfirmationResult;
   createCategory: Category;
   createCoupon: Coupon;
+  createNotification?: Maybe<Notification>;
   createReview: Review;
   deleteCategory: Scalars['Boolean']['output'];
   deleteCoupon: Scalars['Boolean']['output'];
@@ -339,6 +340,7 @@ export type Mutation = {
   deleteOrder: Scalars['Boolean']['output'];
   deleteProduct: Scalars['Boolean']['output'];
   deleteReview: Scalars['Boolean']['output'];
+  markNotificationsRead: Scalars['Int']['output'];
   removeCartItem: Scalars['Boolean']['output'];
   removeFavorite: Scalars['Boolean']['output'];
   removeFromWishlist: Scalars['Boolean']['output'];
@@ -415,6 +417,11 @@ export type MutationCreateCouponArgs = {
 };
 
 
+export type MutationCreateNotificationArgs = {
+  input: NotificationInput;
+};
+
+
 export type MutationCreateReviewArgs = {
   input: CreateReviewInput;
 };
@@ -459,6 +466,11 @@ export type MutationDeleteProductArgs = {
 export type MutationDeleteReviewArgs = {
   productId: Scalars['String']['input'];
   reviewId: Scalars['String']['input'];
+};
+
+
+export type MutationMarkNotificationsReadArgs = {
+  ids?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -554,6 +566,52 @@ export type MutationUpdateOrderStatusArgs = {
 export type MutationUpdateReviewArgs = {
   input: UpdateReviewInput;
 };
+
+export type Notification = {
+  __typename?: 'Notification';
+  body?: Maybe<Scalars['String']['output']>;
+  channel?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  insertedAt?: Maybe<Scalars['String']['output']>;
+  metadata?: Maybe<Scalars['String']['output']>;
+  readAt?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  subject?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type NotificationConnection = {
+  __typename?: 'NotificationConnection';
+  edges: Array<NotificationEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type NotificationEdge = {
+  __typename?: 'NotificationEdge';
+  cursor: Scalars['String']['output'];
+  node: Notification;
+};
+
+export type NotificationInput = {
+  body?: InputMaybe<Scalars['String']['input']>;
+  channel?: InputMaybe<Scalars['String']['input']>;
+  customerId?: InputMaybe<Scalars['String']['input']>;
+  dedupKey?: InputMaybe<Scalars['String']['input']>;
+  error?: InputMaybe<Scalars['String']['input']>;
+  metadata?: InputMaybe<Scalars['String']['input']>;
+  provider?: InputMaybe<Scalars['String']['input']>;
+  providerMessageId?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<NotificationStatus>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  type: Scalars['String']['input'];
+};
+
+export type NotificationStatus =
+  | 'DELIVERED'
+  | 'FAILED'
+  | 'PENDING'
+  | 'SENT';
 
 export type NotificationTemplate = {
   __typename?: 'NotificationTemplate';
@@ -678,7 +736,7 @@ export type PaymentConfirmationInput = {
 
 export type PaymentConfirmationResult = {
   __typename?: 'PaymentConfirmationResult';
-  orderStatus?: Maybe<Scalars['String']['output']>;
+  orderId?: Maybe<Scalars['String']['output']>;
   paymentId: Scalars['String']['output'];
   status: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
@@ -861,6 +919,7 @@ export type Query = {
   deliveryZones: Array<DeliveryZone>;
   hero?: Maybe<Hero>;
   notificationTemplates: Array<NotificationTemplate>;
+  notifications: NotificationConnection;
   order?: Maybe<Order>;
   orderCount: Scalars['Int']['output'];
   orders: OrderConnection;
@@ -874,6 +933,7 @@ export type Query = {
   recommendations: RecommendationResult;
   store?: Maybe<Store>;
   storeSettings: StoreSettings;
+  unreadNotificationCount: Scalars['Int']['output'];
   validateCoupon: ValidateCouponResult;
   wishlist?: Maybe<Wishlist>;
 };
@@ -912,6 +972,15 @@ export type QueryDeliveryZoneArgs = {
 
 export type QueryNotificationTemplatesArgs = {
   eventType?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryNotificationsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  size?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1155,7 +1224,6 @@ export type SaveOrderItemInput = {
 export type Store = {
   __typename?: 'Store';
   currency?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
   domainName?: Maybe<Scalars['String']['output']>;
   faviconUrl?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
@@ -1171,8 +1239,6 @@ export type StoreSettings = {
   about?: Maybe<Scalars['String']['output']>;
   /** Contact information displayed on your store (JSON) */
   contact?: Maybe<Scalars['String']['output']>;
-  /** Email configuration for storefront customer authentication (JSON) */
-  email?: Maybe<Scalars['String']['output']>;
   /** Environment variables for the template (JSON) */
   environment?: Maybe<Scalars['String']['output']>;
   /** Social media profiles for your store (JSON) */

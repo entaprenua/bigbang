@@ -31,7 +31,6 @@ All primitives read from `useStore()` which gets data from the global `StoreProv
 
 ```typescript
 <StoreName class?: string />
-<StoreDescription class?: string />
 <StoreDomain class?: string; includeProtocol?: boolean />
 <StoreBadge variant?: "active" | "inactive" | "template" | "maintenance"; class?: string />
 ```
@@ -43,7 +42,6 @@ type StoreContextValue = {
   data: Accessor<Store | null>
   id: Accessor<string | null>
   name: Accessor<string | null>
-  description: Accessor<string | null>
   domain: Accessor<string | null>
 }
 
@@ -71,7 +69,6 @@ type StoreProviderProps = {
 ```tsx
 <div class="footer">
   <StoreName class="font-bold" />
-  <StoreDescription />
   <StoreDomain includeProtocol />
 </div>
 ```
@@ -108,6 +105,5 @@ Local (components can wrap with StoreProvider to override)
 | Component | Status |
 |-----------|--------|
 | StoreName | ✅ Done |
-| StoreDescription | ✅ Done |
 | StoreDomain | ✅ Done |
 | StoreBadge | ✅ Done |

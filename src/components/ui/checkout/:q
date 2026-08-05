@@ -1,8 +1,7 @@
-import { createContext, useContext, createResource, createMemo, createEffect, Show, splitProps, type JSX } from 'solid-js'
-import { Button, type ButtonProps } from '../button'
+import { createContext, useContext, createResource, Show, splitProps, type JSX } from 'solid-js'
+import { Button } from '../button'
 import { RadioGroup } from '../radio-group'
 import { SegmentedControl } from '../segmented-control'
-import { TextField, TextFieldInput, TextFieldLabel, TextFieldErrorMessage } from '../text-field'
 import { cn } from '~/lib/utils'
 import { getConfig } from '~/lib/config'
 import { useCheckout } from './checkout-context'
@@ -31,23 +30,24 @@ function CheckoutPaymentMethod(props: CheckoutPaymentMethodProps) {
   const enabled = () => cfg()?.[`${local.method}_enabled`] !== false
 
   return (
-    <CheckoutPaymentMethodContext.Provider value={{ method: local.method }}>
-      <Show when={enabled()}>
+    <Show when={enabled()}>
+      <CheckoutPaymentMethodContext.Provider value={{ method: local.method }}>
         {local.children}
-      </Show>
-    </CheckoutPaymentMethodContext.Provider>
+      </CheckoutPaymentMethodContext.Provider>
+    </Show>
   )
 }
 
 // ─── CheckoutPaymentMethodSelectButton ────────────────────────
 
-type CheckoutPaymentMethodSelectButtonProps = Omit<ButtonProps<"button">, "onClick"> & {
+type CheckoutPaymentMethodSelectButtonProps = {
   method?: string
-  onClick?: (e: MouseEvent) => void
+  class?: string
+  children?: JSX.Element
 }
 
 function CheckoutPaymentMethodSelectButton(props: CheckoutPaymentMethodSelectButtonProps) {
-  const [local, others] = splitProps(props, ['method', 'onClick', 'class', 'children'])
+  const [local] = splitProps(props, ['method', 'class', 'children'])
   const parent = useCheckoutPaymentMethodOptional()
   const { formData, setField } = useCheckout()
   const method = () => local.method ?? parent?.method ?? ''
@@ -58,12 +58,11 @@ function CheckoutPaymentMethodSelectButton(props: CheckoutPaymentMethodSelectBut
       type="button"
       variant="outline"
       data-selected={selected() ? '' : undefined}
-      onClick={(e) => { setField('paymentMethod', method()); local.onClick?.(e) }}
+      onClick={() => setField('paymentMethod', method())}
       class={cn(
         'not-data-[selected]:opacity-50 hover:not-data-[selected]:opacity-75',
         local.class
       )}
-      {...others}
     >
       {local.children ?? PAYMENT_LABELS[method()] ?? method()}
     </Button>
@@ -114,51 +113,9 @@ function CheckoutPaymentMethodSegmentedControl(props: CheckoutPaymentMethodSegme
   )
 }
 
-// ─── CheckoutPaymentPhoneTextField ────────────────────────────
-
-const phoneRegex = /^(?:\+?254\d{9}|0\d{9})$/
-
-function CheckoutPaymentPhoneTextField(props: { children?: JSX.Element; class?: string }) {
-  const [local, others] = splitProps(props, ['children', 'class'])
-  const { formData, setField, unsatisfiedFields } = useCheckout()
-  const parent = useCheckoutPaymentMethodOptional()
-  const method = () => parent?.method ?? ''
-  const error = createMemo(() => {
-    const isSelected = formData.paymentMethod === method()
-    if (!isSelected) return 'valid' as const
-    if (!formData.paymentPhone) return 'invalid' as const
-    return phoneRegex.test(formData.paymentPhone) ? 'valid' as const : 'invalid' as const
-  })
-  createEffect(() => {
-    const isSelected = formData.paymentMethod === method()
-    const ok = !isSelected || (!!formData.paymentPhone && phoneRegex.test(formData.paymentPhone))
-    ok ? unsatisfiedFields.delete('paymentPhone') : unsatisfiedFields.add('paymentPhone')
-  })
-
-  return (
-    <TextField
-      value={formData.paymentPhone}
-      onChange={(v) => setField('paymentPhone', v)}
-      validationState={error()}
-      class={cn('w-full', local.class)}
-      {...others}
-    >
-      {local.children ?? (
-        <>
-          <TextFieldLabel>{PAYMENT_LABELS[method()] ?? method()} Phone</TextFieldLabel>
-          <TextFieldInput type="tel" placeholder="254712345678" />
-          <TextFieldErrorMessage>Please enter a valid {PAYMENT_LABELS[method()] ?? method()} phone number</TextFieldErrorMessage>
-        </>
-      )}
-    </TextField>
-  )
-}
-
 export {
   CheckoutPaymentMethod,
   CheckoutPaymentMethodSelectButton,
   CheckoutPaymentMethodRadioGroup,
   CheckoutPaymentMethodSegmentedControl,
-  CheckoutPaymentPhoneTextField,
-  useCheckoutPaymentMethodOptional,
 }

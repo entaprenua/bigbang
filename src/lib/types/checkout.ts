@@ -1,7 +1,6 @@
 export interface CheckoutFormData {
-  email: string
+  contact: string
   name: string
-  phone: string
   provider: string
   paymentPhone: string
   deliveryMethod: string

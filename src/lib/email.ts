@@ -43,7 +43,7 @@ export async function sendEmail(opts: {
   const senderName = opts.fromName || defaultFromName;
   const from = senderName ? `${senderName} <${senderEmail}>` : senderEmail;
 
-  return getResend().emails.send({
+  const res = await getResend().emails.send({
     from,
     to: Array.isArray(opts.to) ? opts.to : [opts.to],
     subject: opts.subject,
@@ -61,5 +61,8 @@ export async function sendEmail(opts: {
           content_type: a.content_type,
         }))
       : undefined,
-  });
+  })
+
+  if (res.error) throw new Error(res.error.message)
+  return res
 }

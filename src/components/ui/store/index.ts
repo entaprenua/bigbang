@@ -1,7 +1,6 @@
 export { StoreProvider, useStore } from "./store-context"
 export {
   StoreName,
-  StoreDescription,
   StoreDomain,
   StoreMaintenanceBadge,
   StoreLogo,

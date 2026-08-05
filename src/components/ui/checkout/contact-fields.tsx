@@ -1,4 +1,4 @@
-import { createMemo, splitProps, type JSX } from 'solid-js'
+import { createMemo, createEffect, splitProps, type JSX } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { TextField, TextFieldInput, TextFieldLabel, TextFieldTextArea, TextFieldErrorMessage } from '../text-field'
 import { cn } from '~/lib/utils'
@@ -12,28 +12,33 @@ type CheckoutFieldProps = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const phoneRegex = /^(?:\+?254\d{9}|0\d{9})$/
 
-function CheckoutEmailTextField(props: CheckoutFieldProps) {
+function CheckoutContactTextField(props: CheckoutFieldProps) {
   const [local, others] = splitProps(props, ['children', 'class'])
-  const { formData, setField } = useCheckout()
+  const { formData, setField, unsatisfiedFields } = useCheckout()
   const error = createMemo(() => {
-    const v = formData.email
-    if (!v) return 'valid' as const
-    return emailRegex.test(v) ? 'valid' as const : 'invalid' as const
+    const v = formData.contact
+    if (!v) return 'invalid' as const
+    return emailRegex.test(v) || phoneRegex.test(v) ? 'valid' as const : 'invalid' as const
+  })
+  createEffect(() => {
+    const v = formData.contact
+    const ok = !!v && (emailRegex.test(v) || phoneRegex.test(v))
+    ok ? unsatisfiedFields.delete('contact') : unsatisfiedFields.add('contact')
   })
 
   return (
     <TextField
-      value={formData.email}
-      onChange={(v) => setField('email', v)}
+      value={formData.contact}
+      onChange={(v) => setField('contact', v)}
       validationState={error()}
       class={cn('w-full', local.class)}
       {...others}
     >
       {local.children ?? (
         <>
-          <TextFieldLabel>Email</TextFieldLabel>
-          <TextFieldInput type="email" placeholder="Enter your email" />
-          <TextFieldErrorMessage>Please enter a valid email</TextFieldErrorMessage>
+          <TextFieldLabel>Email or Phone</TextFieldLabel>
+          <TextFieldInput type="text" placeholder="you@example.com or 0712345678" />
+          <TextFieldErrorMessage>Enter a valid email or phone number</TextFieldErrorMessage>
         </>
       )}
     </TextField>
@@ -61,34 +66,6 @@ function CheckoutNameTextField(props: CheckoutFieldProps) {
   )
 }
 
-function CheckoutPhoneTextField(props: CheckoutFieldProps) {
-  const [local, others] = splitProps(props, ['children', 'class'])
-  const { formData, setField } = useCheckout()
-  const error = createMemo(() => {
-    const v = formData.phone
-    if (!v) return 'valid' as const
-    return phoneRegex.test(v) ? 'valid' as const : 'invalid' as const
-  })
-
-  return (
-    <TextField
-      value={formData.phone}
-      onChange={(v) => setField('phone', v)}
-      validationState={error()}
-      class={cn('w-full', local.class)}
-      {...others}
-    >
-      {local.children ?? (
-        <>
-          <TextFieldLabel>Phone</TextFieldLabel>
-          <TextFieldInput type="tel" placeholder="+254712345678" />
-          <TextFieldErrorMessage>Please enter a valid phone number</TextFieldErrorMessage>
-        </>
-      )}
-    </TextField>
-  )
-}
-
 function CheckoutNotesTextArea(props: CheckoutFieldProps) {
   const [local, others] = splitProps(props, ['children', 'class'])
   const { formData, setField } = useCheckout()
@@ -110,38 +87,8 @@ function CheckoutNotesTextArea(props: CheckoutFieldProps) {
   )
 }
 
-function CheckoutPaymentPhoneTextField(props: CheckoutFieldProps) {
-  const [local, others] = splitProps(props, ['children', 'class'])
-  const { formData, setField } = useCheckout()
-  const error = createMemo(() => {
-    const v = formData.paymentPhone
-    if (!v) return 'valid' as const
-    return phoneRegex.test(v) ? 'valid' as const : 'invalid' as const
-  })
-
-  return (
-    <TextField
-      value={formData.paymentPhone}
-      onChange={(v) => setField('paymentPhone', v)}
-      validationState={error()}
-      class={cn('w-full', local.class)}
-      {...others}
-    >
-      {local.children ?? (
-        <>
-          <TextFieldLabel>M-Pesa Phone</TextFieldLabel>
-          <TextFieldInput type="tel" placeholder="254712345678" />
-          <TextFieldErrorMessage>Please enter a valid M-Pesa phone number</TextFieldErrorMessage>
-        </>
-      )}
-    </TextField>
-  )
-}
-
 export {
-  CheckoutEmailTextField,
+  CheckoutContactTextField,
   CheckoutNameTextField,
-  CheckoutPhoneTextField,
   CheckoutNotesTextArea,
-  CheckoutPaymentPhoneTextField,
 }
