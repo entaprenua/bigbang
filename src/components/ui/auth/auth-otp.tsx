@@ -1,0 +1,247 @@
+import {
+  createContext,
+  useContext,
+  createSignal,
+  Show,
+  splitProps,
+  type Accessor,
+  type JSX,
+} from "solid-js"
+import { MutationProvider, useMutationState } from "~/components/ui/query"
+import { TextField } from "../text-field"
+import { OTPField } from "../otp-field"
+import { useAuth } from "./auth-provider"
+import { cn } from "~/lib/utils"
+
+// ─── AuthOtpFlowProvider ──────────────────────────────────────
+
+interface AuthOtpFlowContextType {
+  email: Accessor<string>
+  setEmail: (v: string) => void
+  name: Accessor<string>
+  setName: (v: string) => void
+  phone: Accessor<string>
+  setPhone: (v: string) => void
+  step: Accessor<"email" | "verify">
+  setStep: (v: "email" | "verify") => void
+}
+
+const AuthOtpFlowContext = createContext<AuthOtpFlowContextType>()
+
+function AuthOtpFlowProvider(props: { children?: JSX.Element }) {
+  const [email, setEmail] = createSignal("")
+  const [name, setName] = createSignal("")
+  const [phone, setPhone] = createSignal("")
+  const [step, setStep] = createSignal<"email" | "verify">("email")
+
+  return (
+    <AuthOtpFlowContext.Provider value={{ email, setEmail, name, setName, phone, setPhone, step, setStep }}>
+      {props.children}
+    </AuthOtpFlowContext.Provider>
+  )
+}
+
+function useAuthOtpFlow() {
+  const ctx = useContext(AuthOtpFlowContext)
+  if (!ctx) throw new Error("useAuthOtpFlow must be used within AuthOtpFlowProvider")
+  return ctx
+}
+
+// ─── Steps ────────────────────────────────────────────────────
+
+interface AuthEmailStepProps {
+  children?: JSX.Element
+}
+
+const AuthEmailStep = (props: AuthEmailStepProps) => {
+  const { step } = useAuthOtpFlow()
+  return <Show when={step() === "email"}>{props.children}</Show>
+}
+
+interface AuthVerifyStepProps {
+  children?: JSX.Element
+}
+
+const AuthVerifyStep = (props: AuthVerifyStepProps) => {
+  const { step } = useAuthOtpFlow()
+  return <Show when={step() === "verify"}>{props.children}</Show>
+}
+
+// ─── AuthEmailField ───────────────────────────────────────────
+
+interface AuthEmailFieldProps {
+  class?: string
+  children?: JSX.Element
+}
+
+const AuthEmailField = (props: AuthEmailFieldProps) => {
+  const [local, others] = splitProps(props, ["class", "children"])
+  const { email, setEmail } = useAuthOtpFlow()
+
+  return (
+    <TextField
+      class={cn("w-full", local.class)}
+      value={email()}
+      onChange={setEmail}
+      {...others}
+    >
+      {local.children}
+    </TextField>
+  )
+}
+
+interface AuthNameFieldProps {
+  class?: string
+  children?: JSX.Element
+}
+
+const AuthNameField = (props: AuthNameFieldProps) => {
+  const [local, others] = splitProps(props, ["class", "children"])
+  const { name, setName } = useAuthOtpFlow()
+
+  return (
+    <TextField
+      class={cn("w-full", local.class)}
+      value={name()}
+      onChange={setName}
+      {...others}
+    >
+      {local.children}
+    </TextField>
+  )
+}
+
+interface AuthPhoneFieldProps {
+  class?: string
+  children?: JSX.Element
+}
+
+const AuthPhoneField = (props: AuthPhoneFieldProps) => {
+  const [local, others] = splitProps(props, ["class", "children"])
+  const { phone, setPhone } = useAuthOtpFlow()
+
+  return (
+    <TextField
+      class={cn("w-full", local.class)}
+      value={phone()}
+      onChange={setPhone}
+      {...others}
+    >
+      {local.children}
+    </TextField>
+  )
+}
+
+// ─── AuthOtpRequestProvider ───────────────────────────────────
+
+interface AuthOtpRequestProviderProps {
+  children?: JSX.Element
+}
+
+function AuthOtpRequestProvider(props: AuthOtpRequestProviderProps) {
+  const auth = useAuth()
+  const { email, setStep } = useAuthOtpFlow()
+
+  return (
+    <MutationProvider
+      mutationFn={async () => {
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+        return auth.requestOtp(email(), otp)
+      }}
+      onSuccess={() => setStep("verify")}
+    >
+      {props.children}
+    </MutationProvider>
+  )
+}
+
+// ─── AuthOtpProvider ─────────────────────────────────────────
+
+interface AuthOtpContextType {
+  otp: Accessor<string>
+  setOtp: (v: string) => void
+}
+
+const AuthOtpContext = createContext<AuthOtpContextType>()
+
+interface AuthOtpProviderProps {
+  register?: boolean
+  children?: JSX.Element
+}
+
+function AuthOtpProvider(props: AuthOtpProviderProps) {
+  const [otp, setOtp] = createSignal("")
+  const auth = useAuth()
+  const { email, name, phone } = useAuthOtpFlow()
+
+  return (
+    <AuthOtpContext.Provider value={{ otp, setOtp }}>
+      <MutationProvider
+        mutationFn={async () => {
+          const result = await auth.verifyOtp(email(), otp())
+          if (result.success && props.register) {
+            await auth.updateProfile({ name: name() || null, phone: phone() || null })
+          }
+          return result
+        }}
+      >
+        {props.children}
+      </MutationProvider>
+    </AuthOtpContext.Provider>
+  )
+}
+
+function useAuthOtp() {
+  const ctx = useContext(AuthOtpContext)
+  if (!ctx) throw new Error("useAuthOtp must be used within AuthOtpProvider")
+  return ctx
+}
+
+// ─── AuthOtpField ────────────────────────────────────────────
+
+interface AuthOtpFieldProps {
+  autoVerify?: boolean
+  maxLength?: number
+  class?: string
+  children?: JSX.Element
+}
+
+const AuthOtpField = (props: AuthOtpFieldProps) => {
+  const [local, others] = splitProps(props, ["class", "maxLength", "autoVerify", "children"])
+  const { otp, setOtp } = useAuthOtp()
+  const mutation = useMutationState()
+
+  return (
+    <OTPField
+      class={cn("w-full justify-center", local.class)}
+      maxLength={local.maxLength ?? 6}
+      value={otp()}
+      onValueChange={(v: string) => setOtp(v)}
+      onComplete={local.autoVerify ? () => mutation?.mutate() : undefined}
+      {...others}
+    >
+      {local.children}
+    </OTPField>
+  )
+}
+
+// ─── Exports ──────────────────────────────────────────────────
+
+export {
+  AuthOtpFlowProvider,
+  useAuthOtpFlow,
+  AuthEmailStep,
+  AuthVerifyStep,
+  AuthEmailField,
+  AuthNameField,
+  AuthPhoneField,
+  AuthOtpRequestProvider,
+  AuthOtpProvider,
+  useAuthOtp,
+  AuthOtpField,
+}
+
+export type {
+  AuthOtpFlowContextType,
+  AuthOtpContextType,
+}

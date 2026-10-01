@@ -1,0 +1,59 @@
+import { Index, createSignal, type JSX } from "solid-js"
+import { splitProps } from "solid-js"
+
+import { cn } from "~/lib/utils"
+
+type RatingGroupProps = {
+  value: number
+  onChange?: (value: number) => void
+  readOnly?: boolean
+  class?: string
+  children?: (filled: boolean) => JSX.Element
+}
+
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" class="size-5">
+      <path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27l-4.77 2.44.91-5.32L2.27 6.62l5.34-.78z" />
+    </svg>
+  )
+}
+
+const RatingGroup = (props: RatingGroupProps) => {
+  const [hovered, setHovered] = createSignal(0)
+  const [local, others] = splitProps(props, ["value", "onChange", "readOnly", "class", "children"])
+  const isInteractive = () => !local.readOnly && typeof local.onChange === "function"
+  const filled = (star: number) => (hovered() ? star <= hovered() : star <= local.value)
+
+  return (
+    <div class={cn("inline-flex", local.class)} role="radiogroup" {...others}>
+      <Index each={Array(5)}>
+        {(_, i) => {
+          const star = i + 1
+          return (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={star <= local.value}
+              tabIndex={isInteractive() && star === 1 ? 0 : -1}
+              disabled={!isInteractive()}
+              onClick={() => { if (isInteractive()) local.onChange!(star) }}
+              onMouseEnter={() => { if (isInteractive()) setHovered(star) }}
+              onMouseLeave={() => { if (isInteractive()) setHovered(0) }}
+              class={cn(
+                "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                filled(star) ? "text-yellow-400" : "text-muted-foreground",
+                isInteractive() && "cursor-pointer hover:scale-110",
+              )}
+            >
+              {local.children ? local.children(filled(star)) : <StarIcon />}
+            </button>
+          )
+        }}
+      </Index>
+    </div>
+  )
+}
+
+export { RatingGroup }
+export type { RatingGroupProps }
